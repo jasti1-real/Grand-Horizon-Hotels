@@ -1,0 +1,23 @@
+name = "grand-horizon-hotels"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Create these resources before the first production deployment:
+#   npx wrangler d1 create grand-horizon-hotels-db
+#   npx wrangler r2 bucket create grand-horizon-hotels-assets
+# Then replace the placeholder database_id below with the returned D1 ID.
+
+d1_databases = [
+  { binding = "DB", database_name = "grand-horizon-hotels-db", database_id = "REPLACE_WITH_D1_DATABASE_ID" }
+]
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "grand-horizon-hotels-assets"
+
+[vars]
+ENVIRONMENT = "development"
+
+[observability]
+enabled = true
