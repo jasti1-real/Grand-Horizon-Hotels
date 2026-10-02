@@ -187,25 +187,59 @@ async function api(request, env, url) {
     const data = await body(request);
     const login = normalizeLogin(data.login);
     const password = String(data.password || '');
-    if (!validLogin(login)) return json({ error: 'Enter a valid email address or phone number.' }, 400);
-    if (password.length < 8) return json({ error: 'Password must be at least 8 characters.' }, 400);
+
+    if (!validLogin(login)) {
+      return json({ error: 'Enter a valid email address or phone number.' }, 400);
+    }
+    if (password.length < 8) {
+      return json({ error: 'Password must be at least 8 characters.' }, 400);
+    }
+
     const exists = await env.DB.prepare('SELECT id FROM users WHERE login=?').bind(login).first();
-    if (exists) return json({ error: 'An account with that email or phone already exists.' }, 409);
-    const { hash, salt } = await hashPassword(password);
-    const created = now();
-    const code = referralCode(login);
+    if (exists) {
+      return json({ error: 'An account with that email or phone already exists.' }, 409);
+    }
+
     try {
-      const result = await env.DB.prepare(
-        'INSERT INTO users (login,password_hash,password_salt,referral_code,balance,total_earnings,created_at) VALUES (?,?,?,?,?,?,?)'
-      ).bind(login, hash, salt, code, 5000, 5000, created).run();
-      const userId = result.meta.last_row_id;
-      await env.DB.prepare(
-        'INSERT INTO transactions (user_id,type,amount,status,reference,created_at) VALUES (?,?,?,?,?,?)'
-      ).bind(userId, 'earning', 5000, 'completed', 'WELCOME-' + randomToken(10), created).run();
+      const { hash, salt } = await hashPassword(password);
+      const created = now();
+
+      // Insert first, then read the ID back from D1. This avoids relying on
+      // driver-specific last_row_id metadata.
+      let userId = null;
+      for (let attempt = 0; attempt < 3 && !userId; attempt++) {
+        const code = referralCode(login);
+        try {
+          await env.DB.prepare(
+            'INSERT INTO users (login,password_hash,password_salt,referral_code,balance,total_earnings,created_at) VALUES (?,?,?,?,?,?,?)'
+          ).bind(login, hash, salt, code, 5000, 5000, created).run();
+          const createdUser = await env.DB.prepare('SELECT id FROM users WHERE login=?').bind(login).first();
+          userId = createdUser?.id ?? null;
+        } catch (insertError) {
+          // A referral-code collision is rare; retry with a new generated code.
+          if (attempt === 2) throw insertError;
+        }
+      }
+
+      if (!userId) throw new Error('User record was not created.');
+
+      // The welcome transaction is bookkeeping; keep account creation successful
+      // even if bookkeeping needs a retry later.
+      try {
+        await env.DB.prepare(
+          'INSERT INTO transactions (user_id,type,amount,status,reference,created_at) VALUES (?,?,?,?,?,?)'
+        ).bind(userId, 'earning', 5000, 'completed', 'WELCOME-' + randomToken(10), created).run();
+      } catch (transactionError) {
+        console.error('Welcome transaction failed', transactionError);
+      }
+
       const token = await createSession(userId, env);
       const user = await env.DB.prepare('SELECT * FROM users WHERE id=?').bind(userId).first();
+      if (!user) throw new Error('Created user could not be loaded.');
+
       return json(await userPayload(user, env), 201, { 'Set-Cookie': sessionCookie(token) });
-    } catch {
+    } catch (error) {
+      console.error('Registration failed', error);
       return json({ error: 'Unable to create the account. Please try again.' }, 500);
     }
   }
