@@ -245,43 +245,90 @@
         </div>
       </section>
 
-      <!-- PROFILE -->
+      <!-- ACCOUNT -->
       <section id="profilePage" class="page">
         <div class="mb-6">
-          <h2 class="text-2xl sm:text-3xl font-bold">Profile</h2>
-          <p class="text-gray-400 mt-1">Manage your account and profile picture.</p>
+          <p class="text-xs uppercase tracking-[0.2em] gold-text font-semibold">Account</p>
+          <h2 class="text-2xl sm:text-3xl font-bold mt-1">Manage Account</h2>
+          <p class="text-gray-400 mt-1">Manage your profile, account details and support links.</p>
         </div>
 
-        <div class="glass rounded-3xl p-6 sm:p-8 text-center">
-          <div class="mx-auto h-32 w-32 rounded-full border-4 border-[#FFD700] overflow-hidden bg-[#222] shadow-gold">
-            <img id="profileAvatar" class="h-full w-full object-cover hidden" alt="Profile picture">
-            <span id="profileAvatarFallback" class="h-full w-full flex items-center justify-center text-4xl gold-text font-bold">G</span>
+        <div class="glass rounded-3xl p-6 mb-5">
+          <div class="flex items-center gap-4">
+            <div class="h-20 w-20 rounded-full border-2 border-[#FFD700] overflow-hidden bg-[#222] shrink-0">
+              <img id="profileAvatar" class="h-full w-full object-cover hidden" alt="Profile picture">
+              <span id="profileAvatarFallback" class="h-full w-full flex items-center justify-center text-2xl gold-text font-bold">G</span>
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs uppercase tracking-[0.18em] gold-text font-semibold">Account</p>
+              <h3 id="accountDisplayName" class="text-xl font-bold mt-1 truncate">User</h3>
+              <p id="profileEmail" class="text-sm text-gray-400 mt-1 break-all"></p>
+            </div>
           </div>
+
           <label for="photoInput" class="inline-block mt-5 cursor-pointer rounded-xl border gold-border gold-text font-semibold px-5 py-3 hover:bg-yellow-400/10 transition">
             Upload Photo
           </label>
           <input id="photoInput" type="file" accept="image/*" class="hidden">
 
-          <div class="mt-7 text-left space-y-3">
-            <div class="rounded-xl bg-[#121212] p-4">
-              <p class="text-xs text-gray-500">Email</p>
-              <p id="profileEmail" class="font-medium mt-1 break-all"></p>
+          <div class="mt-6 space-y-3">
+            <div class="rounded-xl bg-[#121212] p-4 flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs text-gray-500">Account ID</p>
+                <p id="accountIdValue" class="font-semibold mt-1 break-all"></p>
+              </div>
+              <button id="copyAccountId" class="text-xs gold-text font-semibold shrink-0">Copy</button>
             </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div class="rounded-xl bg-[#121212] p-4">
-                <p class="text-xs text-gray-500">Total Invested</p>
-                <p id="totalInvested" class="font-bold mt-1"></p>
+            <div class="rounded-xl bg-[#121212] p-4 flex items-center justify-between gap-4">
+              <div>
+                <p class="text-xs text-gray-500">Referral Code</p>
+                <p id="referralCode" class="font-semibold mt-1"></p>
               </div>
-              <div class="rounded-xl bg-[#121212] p-4">
-                <p class="text-xs text-gray-500">Total Profit</p>
-                <p id="totalProfit" class="font-bold text-green-400 mt-1"></p>
-              </div>
+              <button id="copyReferral" class="text-xs gold-text font-semibold shrink-0">Copy</button>
             </div>
           </div>
-
-          <button id="logoutBtn" class="mt-7 w-full rounded-xl border border-red-500/50 text-red-400 font-semibold py-3.5 hover:bg-red-500/10 transition">Logout</button>
         </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="glass rounded-2xl p-4">
+            <p class="text-xs text-gray-500">Account Balance</p>
+            <p id="accountBalance" class="font-bold text-lg mt-2">UGX 0</p>
+          </div>
+          <div class="glass rounded-2xl p-4">
+            <p class="text-xs text-gray-500">Total Earnings</p>
+            <p id="accountEarnings" class="font-bold text-lg text-green-400 mt-2">UGX 0</p>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-5 mb-5">
+          <h3 class="font-semibold">Account Settings</h3>
+          <button id="changePasswordBtn" class="w-full mt-4 rounded-xl border border-gray-700 py-3.5 font-semibold hover:border-[#FFD700] hover:text-[#FFD700] transition">
+            Change Password
+          </button>
+        </div>
+
+        <div class="glass rounded-2xl p-5 mb-5">
+          <p class="text-xs uppercase tracking-[0.18em] gold-text font-semibold">Contact Us</p>
+          <h3 class="text-xl font-bold mt-1">Telegram</h3>
+          <p class="text-sm text-gray-400 mt-1">Join our Telegram community or contact support.</p>
+
+          <div class="space-y-3 mt-4">
+            <a id="accountTelegramChannel" href="#" target="_blank" rel="noopener noreferrer"
+              class="block rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3.5 text-center hover:bg-sky-500/10 transition">
+              📢 Telegram Channel
+            </a>
+            <a id="accountTelegramGroup" href="#" target="_blank" rel="noopener noreferrer"
+              class="block rounded-xl bg-[#FFD700] text-black font-bold py-3.5 text-center hover:bg-yellow-300 transition">
+              👥 Telegram Group / Support
+            </a>
+          </div>
+        </div>
+
+        <button id="logoutBtn" class="w-full rounded-xl border border-red-500/50 text-red-400 font-semibold py-3.5 hover:bg-red-500/10 transition">
+          Logout
+        </button>
       </section>
+
     </div>
   </main>
 
@@ -302,7 +349,7 @@
       </button>
       <button class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400" data-page="profilePage">
         <svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
-        <span class="text-[11px]">Profile</span>
+        <span class="text-[11px]">Account</span>
       </button>
     </div>
   </nav>
@@ -443,8 +490,11 @@
   function renderProfile() {
     const pic = state.profilePic;
     $('profileEmail').textContent = state.email;
-    $('totalInvested').textContent = money(totalInvested());
-    $('totalProfit').textContent = money(accruedProfit());
+    $('accountDisplayName').textContent = displayName();
+    $('accountIdValue').textContent = state.email;
+    $('referralCode').textContent = referralCode();
+    $('accountBalance').textContent = money(state.balance);
+    $('accountEarnings').textContent = money(accruedProfit());
 
     [$('profileAvatar'), $('headerAvatar')].forEach(img => {
       img.src = pic || '';
@@ -452,6 +502,18 @@
     });
     $('profileAvatarFallback').classList.toggle('hidden', !!pic);
     $('headerAvatarFallback').classList.toggle('hidden', !!pic);
+  }
+
+  function displayName() {
+    const value = String(state.email || '');
+    return value.includes('@') ? value.split('@')[0] : value.replace(/[^0-9+]/g, '').slice(-9) || 'User';
+  }
+
+  function referralCode() {
+    const source = String(state.email || 'GHHUSER').replace(/[^a-z0-9]/gi, '').toUpperCase();
+    let hash = 0;
+    for (let i = 0; i < source.length; i++) hash = ((hash << 5) - hash + source.charCodeAt(i)) | 0;
+    return 'GHH-' + Math.abs(hash).toString(36).toUpperCase().slice(0, 8).padStart(8, '0');
   }
 
   function renderBalances() {
@@ -602,6 +664,21 @@
   $('telegramGroupLink').href = TELEGRAM_GROUP_URL || '#';
   if (!TELEGRAM_CHANNEL_URL) $('telegramChannelLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram channel link will be added soon.'); });
   if (!TELEGRAM_GROUP_URL) $('telegramGroupLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram group link will be added soon.'); });
+
+  $('accountTelegramChannel').href = TELEGRAM_CHANNEL_URL || '#';
+  $('accountTelegramGroup').href = TELEGRAM_GROUP_URL || '#';
+  if (!TELEGRAM_CHANNEL_URL) $('accountTelegramChannel').addEventListener('click', e => { e.preventDefault(); toast('Telegram channel link will be added soon.'); });
+  if (!TELEGRAM_GROUP_URL) $('accountTelegramGroup').addEventListener('click', e => { e.preventDefault(); toast('Telegram group/support link will be added soon.'); });
+
+  $('copyAccountId').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(state.email); toast('Account ID copied.'); }
+    catch { toast('Copy is not available on this browser.'); }
+  });
+  $('copyReferral').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(referralCode()); toast('Referral code copied.'); }
+    catch { toast('Copy is not available on this browser.'); }
+  });
+  $('changePasswordBtn').addEventListener('click', () => openModal('Change Password', 'Secure password changing will be enabled in the backend authentication stage.'));
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => showPage(btn.dataset.page));
