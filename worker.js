@@ -203,47 +203,48 @@ async function api(request, env, url) {
       return json({ error: 'An account with that email or phone already exists.' }, 409);
     }
 
+    let userId = null;
+    let stage = 'password';
     try {
       const { hash, salt } = await hashPassword(password);
       const created = now();
 
-      // Insert first, then read the ID back from D1. This avoids relying on
-      // driver-specific last_row_id metadata.
-      let userId = null;
-      for (let attempt = 0; attempt < 3 && !userId; attempt++) {
-        const code = referralCode(login);
-        try {
-          await env.DB.prepare(
-            'INSERT INTO users (login,password_hash,password_salt,referral_code,balance,total_earnings,created_at) VALUES (?,?,?,?,?,?,?)'
-          ).bind(login, hash, salt, code, 5000, 5000, created).run();
-          const createdUser = await env.DB.prepare('SELECT id FROM users WHERE login=?').bind(login).first();
-          userId = createdUser?.id ?? null;
-        } catch (insertError) {
-          // A referral-code collision is rare; retry with a new generated code.
-          if (attempt === 2) throw insertError;
-        }
-      }
+      stage = 'user';
+      const referral = 'GHH-' + randomToken(9).replace(/[^A-Z0-9]/gi, '').slice(0, 12).toUpperCase();
+      await env.DB.prepare(
+        'INSERT INTO users (login,password_hash,password_salt,referral_code,balance,total_earnings,created_at) VALUES (?,?,?,?,?,?,?)'
+      ).bind(login, hash, salt, referral, 5000, 5000, created).run();
 
-      if (!userId) throw new Error('User record was not created.');
+      const createdUser = await env.DB.prepare('SELECT * FROM users WHERE login=?').bind(login).first();
+      if (!createdUser) throw new Error('User record was not created.');
+      userId = createdUser.id;
 
-      // The welcome transaction is bookkeeping; keep account creation successful
-      // even if bookkeeping needs a retry later.
+      stage = 'session';
+      const token = await createSession(userId, env);
+
+      stage = 'welcome';
       try {
         await env.DB.prepare(
           'INSERT INTO transactions (user_id,type,amount,status,reference,created_at) VALUES (?,?,?,?,?,?)'
         ).bind(userId, 'earning', 5000, 'completed', 'WELCOME-' + randomToken(10), created).run();
-      } catch (transactionError) {
-        console.error('Welcome transaction failed', transactionError);
+      } catch (welcomeError) {
+        console.error('Welcome transaction failed', welcomeError);
       }
 
-      const token = await createSession(userId, env);
-      const user = await env.DB.prepare('SELECT * FROM users WHERE id=?').bind(userId).first();
-      if (!user) throw new Error('Created user could not be loaded.');
-
-      return json(await userPayload(user, env), 201, { 'Set-Cookie': sessionCookie(token) });
+      stage = 'response';
+      return json(await userPayload(createdUser, env), 201, { 'Set-Cookie': sessionCookie(token) });
     } catch (error) {
-      console.error('Registration failed', error);
-      return json({ error: 'Unable to create the account. Please try again.' }, 500);
+      console.error('Registration failed at stage:', stage, error);
+      if (userId) {
+        try {
+          await env.DB.prepare('DELETE FROM users WHERE id=?').bind(userId).run();
+        } catch (cleanupError) {
+          console.error('Registration cleanup failed', cleanupError);
+        }
+      }
+      return json({
+        error: 'Account creation failed during ' + stage + '. Please try again.'
+      }, 500);
     }
   }
 
