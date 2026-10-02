@@ -59,8 +59,8 @@ function randomToken(size = 32) {
 }
 
 async function sha256(value) {
-  const data = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest('SHA-256', data);
+  const data = new TextEncoder().encode(String(value));
+  const digest = await crypto.subtle.digest('SHA-256', data.slice().buffer);
   return bytesToBase64(new Uint8Array(digest));
 }
 
