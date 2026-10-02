@@ -1,8 +1,0 @@
-name = "grand-horizon-hotels"
-main = "worker.js"
-compatibility_date = "2026-10-02"
-
-[[d1_databases]]
-binding = "DB"
-database_name = "grand-horizon-hotels-db"
-database_id = "f7e9cf2c-e6dc-44b1-9d16-7be4a200344a"
