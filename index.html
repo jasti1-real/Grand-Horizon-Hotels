@@ -101,7 +101,7 @@
         <button id="signupBtn" class="mt-3 w-full rounded-xl border border-gray-700 text-white font-semibold py-3.5 hover:border-[#FFD700] hover:text-[#FFD700] transition">
           Sign Up
         </button>
-        <div class="grid grid-cols-2 gap-3 mt-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <a id="telegramChannelLink" href="#" target="_blank" rel="noopener noreferrer"
              class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">
             📢 Telegram Channel
@@ -109,6 +109,10 @@
           <a id="telegramGroupLink" href="#" target="_blank" rel="noopener noreferrer"
              class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">
             👥 Telegram Group
+          </a>
+          <a id="whatsappChannelLink" href="https://whatsapp.com/channel/0029VbDzcP88F2pDS3w0vs3Y" target="_blank" rel="noopener noreferrer"
+             class="rounded-xl border border-green-500/30 bg-green-500/5 text-green-300 font-semibold py-3 text-center hover:bg-green-500/10 transition">
+            💬 WhatsApp Channel
           </a>
         </div>
         <p class="text-xs text-gray-500 text-center mt-5">Frontend demo storage only. Secure server authentication will be added in the backend stage.</p>
@@ -313,8 +317,8 @@
 
         <div class="glass rounded-2xl p-5 mb-5">
           <p class="text-xs uppercase tracking-[0.18em] gold-text font-semibold">Contact Us</p>
-          <h3 class="text-xl font-bold mt-1">Telegram</h3>
-          <p class="text-sm text-gray-400 mt-1">Join our Telegram community or contact support.</p>
+          <h3 class="text-xl font-bold mt-1">Telegram & WhatsApp</h3>
+          <p class="text-sm text-gray-400 mt-1">Join our Telegram community or WhatsApp channel for updates and support.</p>
 
           <div class="space-y-3 mt-4">
             <a id="accountTelegramChannel" href="#" target="_blank" rel="noopener noreferrer"
@@ -324,6 +328,10 @@
             <a id="accountTelegramGroup" href="#" target="_blank" rel="noopener noreferrer"
               class="block rounded-xl bg-[#FFD700] text-black font-bold py-3.5 text-center hover:bg-yellow-300 transition">
               👥 Telegram Group / Support
+            </a>
+            <a id="accountWhatsappChannel" href="https://whatsapp.com/channel/0029VbDzcP88F2pDS3w0vs3Y" target="_blank" rel="noopener noreferrer"
+              class="block rounded-xl border border-green-500/30 bg-green-500/5 text-green-300 font-semibold py-3.5 text-center hover:bg-green-500/10 transition">
+              💬 WhatsApp Channel
             </a>
           </div>
         </div>
@@ -419,6 +427,7 @@
 (() => {
   const TELEGRAM_CHANNEL_URL = ''; // Add your official channel link here, e.g. https://t.me/yourchannel
   const TELEGRAM_GROUP_URL = '';   // Add your official group invite/link here, e.g. https://t.me/yourgroup
+  const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029VbDzcP88F2pDS3w0vs3Y';
 
   const PACKAGES = [
     { id: 20000, price: 20000, daily: 5000, image: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=900' },
@@ -727,6 +736,8 @@
 
   $('telegramChannelLink').href = TELEGRAM_CHANNEL_URL || '#';
   $('telegramGroupLink').href = TELEGRAM_GROUP_URL || '#';
+  $('whatsappChannelLink').href = WHATSAPP_CHANNEL_URL;
+  $('accountWhatsappChannel').href = WHATSAPP_CHANNEL_URL;
   if (!TELEGRAM_CHANNEL_URL) $('telegramChannelLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram channel link will be added soon.'); });
   if (!TELEGRAM_GROUP_URL) $('telegramGroupLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram group link will be added soon.'); });
 
