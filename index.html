@@ -59,6 +59,10 @@
     .room-image { aspect-ratio: 16/10; object-fit: cover; }
     .modal { display: none; }
     .modal.open { display: flex; }
+    .welcome-modal { display:none; }
+    .welcome-modal.open { display:flex; }
+    .welcome-card { animation: welcomePop .22s ease-out; }
+    @keyframes welcomePop { from { transform:scale(.94); opacity:0; } to { transform:scale(1); opacity:1; } }
   </style>
 </head>
 <body>
@@ -354,6 +358,49 @@
     </div>
   </nav>
 
+  <!-- WELCOME BONUS POPUP -->
+  <div id="welcomeModal" class="welcome-modal fixed inset-0 z-[70] items-center justify-center bg-black/75 backdrop-blur-sm px-4">
+    <div class="welcome-card w-full max-w-md rounded-3xl bg-[#1e1e1e] border border-[#FFD700]/30 shadow-2xl overflow-hidden">
+      <div class="p-6 text-center border-b border-gray-800">
+        <div class="mx-auto h-14 w-14 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 flex items-center justify-center text-2xl">🎁</div>
+        <h2 class="text-2xl font-bold mt-3 gold-text">Welcome to Grand Horizon Hotels</h2>
+        <p class="text-gray-400 text-sm mt-1">Welcome bonus and account information</p>
+      </div>
+
+      <div class="p-6 space-y-3 text-sm">
+        <div class="rounded-xl bg-[#121212] p-4">
+          <p>🎁 <span class="font-semibold">Welcome Bonus:</span> <span class="gold-text font-bold">5,000/=</span></p>
+          <p class="mt-2">💰 <span class="font-semibold">Minimum Deposit:</span> 20,000/=</p>
+          <p class="mt-2">💵 <span class="font-semibold">Minimum Withdraw:</span> 5,000/=</p>
+          <p class="mt-2">⚡ <span class="font-semibold">Withdraw in 5 seconds daily</span> 💰</p>
+          <p class="mt-2">📌 <span class="font-semibold">Withdraw Tax:</span> 15%</p>
+        </div>
+
+        <div class="rounded-xl bg-[#121212] p-4">
+          <p class="text-lg">👥</p>
+          <p class="font-bold mt-1">Bigger Referral Bonuses! 📈</p>
+          <p class="text-gray-400 mt-1">Click a link below to visit our official channels or website.</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3">
+          <a id="welcomeWebsiteLink" href="https://grand-horizon-hotels.investmentreal95.workers.dev/" target="_blank" rel="noopener noreferrer"
+             class="rounded-xl bg-[#FFD700] text-black font-bold py-3 text-center hover:bg-yellow-300 transition">
+            🌐 Visit Grand Horizon Hotels
+          </a>
+          <a id="welcomeTelegramLink" href="#" target="_blank" rel="noopener noreferrer"
+             class="rounded-xl border border-sky-500/40 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">
+            ✈️ Join Telegram
+          </a>
+        </div>
+
+        <button id="closeWelcomeModal" class="w-full rounded-xl border border-gray-700 text-white font-semibold py-3 hover:border-[#FFD700] hover:text-[#FFD700] transition">
+          Continue to Dashboard
+        </button>
+        <p class="text-[11px] text-gray-500 text-center">The bonus, withdrawal timing, tax and other offer details above are displayed as provided by the site owner.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- PAYMENT INFO MODAL -->
   <div id="paymentModal" class="modal fixed inset-0 z-50 items-center justify-center bg-black/75 px-4">
     <div class="glass w-full max-w-md rounded-3xl p-6">
@@ -644,6 +691,7 @@
     state.loggedIn = true;
     save();
     enterApp();
+    openWelcomeModal();
   });
 
   $('signupBtn').addEventListener('click', () => {
@@ -657,7 +705,24 @@
     state.loggedIn = true;
     save();
     enterApp();
+    openWelcomeModal();
     toast('Demo account created.');
+  });
+
+  function openWelcomeModal() {
+    $('welcomeModal').classList.add('open');
+    $('welcomeTelegramLink').href = TELEGRAM_GROUP_URL || '#';
+  }
+  function closeWelcomeModal() {
+    $('welcomeModal').classList.remove('open');
+  }
+  $('closeWelcomeModal').addEventListener('click', closeWelcomeModal);
+  $('welcomeModal').addEventListener('click', e => {
+    if (e.target === $('welcomeModal')) closeWelcomeModal();
+  });
+  if (!TELEGRAM_GROUP_URL) $('welcomeTelegramLink').addEventListener('click', e => {
+    e.preventDefault();
+    toast('Telegram link will be added when you send it.');
   });
 
   $('telegramChannelLink').href = TELEGRAM_CHANNEL_URL || '#';
