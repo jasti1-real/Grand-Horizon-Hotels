@@ -65,11 +65,21 @@ async function sha256(value) {
 }
 
 async function hashPassword(password, saltBytes) {
-  const salt = saltBytes || crypto.getRandomValues(new Uint8Array(16));
-  const passwordBytes = new TextEncoder().encode(password);
-  const key = await crypto.subtle.importKey('raw', passwordBytes.buffer, 'PBKDF2', false, ['deriveBits']);
+  const salt = saltBytes
+    ? new Uint8Array(saltBytes)
+    : crypto.getRandomValues(new Uint8Array(16));
+  const passwordBytes = new TextEncoder().encode(String(password));
+  const passwordBuffer = passwordBytes.slice().buffer;
+  const saltBuffer = salt.slice().buffer;
+  const key = await crypto.subtle.importKey(
+    'raw',
+    passwordBuffer,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
   const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: salt.buffer, iterations: 20000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: saltBuffer, iterations: 20000, hash: 'SHA-256' },
     key,
     256
   );
@@ -200,10 +210,10 @@ async function api(request, env, url) {
     if (password.length < 8) return json({ error: 'Password must be at least 8 characters.' }, 400);
     const exists = await env.DB.prepare('SELECT id FROM users WHERE login=?').bind(login).first();
     if (exists) return json({ error: 'An account with that email or phone already exists.' }, 409);
-    const { hash, salt } = await hashPassword(password);
     const created = now();
     const code = referralCode(login);
     try {
+      const { hash, salt } = await hashPassword(password);
       const result = await env.DB.prepare(
         'INSERT INTO users (login,password_hash,password_salt,referral_code,balance,total_earnings,created_at) VALUES (?,?,?,?,?,?,?)'
       ).bind(login, hash, salt, code, 5000, 5000, created).run();
