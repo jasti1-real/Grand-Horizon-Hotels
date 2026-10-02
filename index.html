@@ -790,7 +790,18 @@
   }
 
   function showDepositRules() {
-    openModal('Deposit', 'Minimum deposit is UGX 20,000. MTN and Airtel Mobile Money payments will be connected when the payment API is added.');
+    $('modalTitle').textContent = 'Deposit Funds';
+    $('modalText').innerHTML = '';
+    $('modalText').insertAdjacentHTML('beforeend', '<p class="mb-4 text-gray-300">Minimum deposit: <strong class="text-[#FFD700]">UGX 20,000</strong></p><label class="block text-sm text-gray-400 mb-2">Amount (UGX)</label><input id="depositAmount" type="number" min="20000" step="1000" placeholder="20000" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><label class="block text-sm text-gray-400 mt-4 mb-2">Payment method</label><select id="depositMethod" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><option>MTN Mobile Money</option><option>Airtel Money</option></select><p class="text-xs text-gray-500 mt-3">Enter your amount and payment method. Real MTN/Airtel processing will be connected when the payment API is supplied.</p>');
+    $('modalOk').textContent = 'Continue Deposit';
+    $('modalOk').onclick = () => {
+      const amount = Number($('depositAmount').value);
+      if (amount < 20000) { toast('Minimum deposit is UGX 20,000.'); return; }
+      closeModal();
+      openModal('Deposit Request', 'Your deposit request for ' + money(amount) + ' via ' + $('depositMethod').value + ' is ready. Real payment processing will be connected to the payment API.');
+      $('modalOk').textContent = 'Okay';
+    };
+    $('paymentModal').classList.add('open');
   }
 
   function showWithdrawRules() {
