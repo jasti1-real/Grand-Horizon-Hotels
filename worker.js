@@ -38,7 +38,8 @@ function bytesToBase64(bytes) {
 }
 
 function base64ToBytes(value) {
-  const s = value.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((value.length + 3) % 4);
+  const pad = (4 - (value.length % 4)) % 4;
+  const s = value.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(pad);
   const bin = atob(s);
   return Uint8Array.from(bin, c => c.charCodeAt(0));
 }
