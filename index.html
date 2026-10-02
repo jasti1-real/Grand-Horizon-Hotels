@@ -78,10 +78,10 @@
       <div class="glass rounded-3xl p-6 sm:p-8 shadow-2xl">
         <form id="authForm" class="space-y-5">
           <div>
-            <label class="block text-sm text-gray-300 mb-2">Email</label>
-            <input id="emailInput" type="email" required autocomplete="email"
+            <label class="block text-sm text-gray-300 mb-2">Email or Phone Number</label>
+            <input id="emailInput" type="text" required autocomplete="username"
               class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3.5 text-white"
-              placeholder="you@example.com">
+              placeholder="you@example.com or +256 7XX XXX XXX">
           </div>
           <div>
             <label class="block text-sm text-gray-300 mb-2">Password</label>
@@ -97,6 +97,16 @@
         <button id="signupBtn" class="mt-3 w-full rounded-xl border border-gray-700 text-white font-semibold py-3.5 hover:border-[#FFD700] hover:text-[#FFD700] transition">
           Sign Up
         </button>
+        <div class="grid grid-cols-2 gap-3 mt-5">
+          <a id="telegramChannelLink" href="#" target="_blank" rel="noopener noreferrer"
+             class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">
+            📢 Telegram Channel
+          </a>
+          <a id="telegramGroupLink" href="#" target="_blank" rel="noopener noreferrer"
+             class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">
+            👥 Telegram Group
+          </a>
+        </div>
         <p class="text-xs text-gray-500 text-center mt-5">Frontend demo storage only. Secure server authentication will be added in the backend stage.</p>
       </div>
     </div>
@@ -313,6 +323,9 @@
 
 <script>
 (() => {
+  const TELEGRAM_CHANNEL_URL = ''; // Add your official channel link here, e.g. https://t.me/yourchannel
+  const TELEGRAM_GROUP_URL = '';   // Add your official group invite/link here, e.g. https://t.me/yourgroup
+
   const PACKAGES = [
     { id: 20000, price: 20000, daily: 5000, image: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=900' },
     { id: 50000, price: 50000, daily: 12500, image: 'https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=900' },
@@ -538,10 +551,26 @@
     $('authPage').classList.remove('hidden');
   }
 
+  function validLoginId(value) {
+    const v = value.trim();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    const phoneOk = /^\+?[0-9][0-9\s().-]{6,18}$/.test(v);
+    return emailOk || phoneOk;
+  }
+
+  function normalizedLoginId(value) {
+    const v = value.trim();
+    return v.includes('@') ? v.toLowerCase() : v.replace(/[\s().-]/g, '');
+  }
+
   $('authForm').addEventListener('submit', e => {
     e.preventDefault();
-    const email = $('emailInput').value.trim().toLowerCase();
+    const email = normalizedLoginId($('emailInput').value);
     const password = $('passwordInput').value;
+    if (!validLoginId($('emailInput').value)) {
+      toast('Enter a valid email address or phone number.');
+      return;
+    }
     if (!email || !password) return;
     const existing = loadState();
     if (existing && existing.email !== email) {
@@ -556,10 +585,10 @@
   });
 
   $('signupBtn').addEventListener('click', () => {
-    const email = $('emailInput').value.trim().toLowerCase();
+    const email = normalizedLoginId($('emailInput').value);
     const password = $('passwordInput').value;
-    if (!email || !password) {
-      toast('Enter an email and password first.');
+    if (!validLoginId($('emailInput').value) || !password) {
+      toast('Enter a valid email/phone and password first.');
       return;
     }
     state = defaultState(email);
@@ -568,6 +597,11 @@
     enterApp();
     toast('Demo account created.');
   });
+
+  $('telegramChannelLink').href = TELEGRAM_CHANNEL_URL || '#';
+  $('telegramGroupLink').href = TELEGRAM_GROUP_URL || '#';
+  if (!TELEGRAM_CHANNEL_URL) $('telegramChannelLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram channel link will be added soon.'); });
+  if (!TELEGRAM_GROUP_URL) $('telegramGroupLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram group link will be added soon.'); });
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => showPage(btn.dataset.page));
