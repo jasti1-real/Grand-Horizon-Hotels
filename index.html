@@ -314,14 +314,14 @@
 <script>
 (() => {
   const PACKAGES = [
-    { id: 20000, price: 20000, daily: 5000, image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80' },
-    { id: 50000, price: 50000, daily: 12500, image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80' },
-    { id: 80000, price: 80000, daily: 20000, image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=900&q=80' },
-    { id: 100000, price: 100000, daily: 25000, image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80' },
-    { id: 150000, price: 150000, daily: 37500, image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=80' },
-    { id: 200000, price: 200000, daily: 50000, image: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=900&q=80' },
-    { id: 300000, price: 300000, daily: 75000, image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80' },
-    { id: 500000, price: 500000, daily: 125000, image: 'https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&fit=crop&w=900&q=80' }
+    { id: 20000, price: 20000, daily: 5000, image: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=900' },
+    { id: 50000, price: 50000, daily: 12500, image: 'https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=900' },
+    { id: 80000, price: 80000, daily: 20000, image: 'https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=900' },
+    { id: 100000, price: 100000, daily: 25000, image: 'https://images.pexels.com/photos/262048/pexels-photo-262048.jpeg?auto=compress&cs=tinysrgb&w=900' },
+    { id: 150000, price: 150000, daily: 37500, image: 'https://images.pexels.com/photos/1743231/pexels-photo-1743231.jpeg?auto=compress&cs=tinysrgb&w=900' },
+    { id: 200000, price: 200000, daily: 50000, image: 'https://images.pexels.com/photos/189296/pexels-photo-189296.jpeg?auto=compress&cs=tinysrgb&w=900' },
+    { id: 300000, price: 300000, daily: 75000, image: 'https://images.pexels.com/photos/261395/pexels-photo-261395.jpeg?auto=compress&cs=tinysrgb&w=900' },
+    { id: 500000, price: 500000, daily: 125000, image: 'https://images.pexels.com/photos/338504/pexels-photo-338504.jpeg?auto=compress&cs=tinysrgb&w=900' }
   ];
 
   const $ = id => document.getElementById(id);
@@ -379,7 +379,7 @@
   function renderRooms() {
     $('roomsGrid').innerHTML = PACKAGES.map(room => `
       <article class="glass rounded-2xl overflow-hidden hover:border-yellow-500/30 transition group">
-        <img class="room-image w-full group-hover:scale-[1.02] transition duration-300" src="${room.image}" alt="Luxury hotel room" loading="lazy">
+        <img class="room-image w-full group-hover:scale-[1.02] transition duration-300" src="${room.image}" alt="Luxury hotel room" loading="eager" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src="https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=900";">
         <div class="p-4">
           <div class="flex items-start justify-between gap-2">
             <div>
