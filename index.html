@@ -788,6 +788,18 @@
     $('modalText').textContent = text;
     $('paymentModal').classList.add('open');
   }
+
+  function showDepositRules() {
+    openModal('Deposit', 'Minimum deposit is UGX 20,000. MTN and Airtel Mobile Money payments will be connected when the payment API is added.');
+  }
+
+  function showWithdrawRules() {
+    if (state.balance < 5000) {
+      openModal('Withdraw', 'Minimum withdrawal is UGX 5,000. Your current balance is below the minimum withdrawal amount.');
+      return;
+    }
+    openModal('Withdraw', 'Minimum withdrawal is UGX 5,000. Your withdrawal request will be connected to the MTN/Airtel payment API during the payments stage.');
+  }
   function closeModal() { $('paymentModal').classList.remove('open'); }
   $('depositBtn').addEventListener('click', () => openModal('Deposit', 'MTN and Airtel Mobile Money will be connected here when the real payment API is supplied.'));
   $('withdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Withdrawal processing will be connected to the secure backend and payment provider in the payments stage.'));
