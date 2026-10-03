@@ -298,6 +298,51 @@
         </div>
       </section>
 
+      <!-- WITHDRAW PAGE -->
+      <section id="withdrawPage" class="page">
+        <div class="mb-6">
+          <button id="backFromWithdrawBtn" class="text-gray-400 hover:text-[#FFD700] text-sm font-semibold mb-4">← Back to Wallet</button>
+          <p class="text-xs uppercase tracking-[0.2em] gold-text font-semibold">Mobile Money</p>
+          <h2 class="text-2xl sm:text-3xl font-bold mt-1">Withdraw Funds</h2>
+          <p class="text-gray-400 mt-1">Enter the MTN or Airtel Mobile Money number you want your withdrawal sent to.</p>
+        </div>
+
+        <form id="withdrawForm" class="glass rounded-3xl p-6 space-y-5">
+          <div class="rounded-xl bg-[#121212] border border-gray-800 p-4">
+            <p class="text-xs text-gray-500">Available Balance</p>
+            <p id="withdrawAvailableBalance" class="text-xl font-bold mt-1">UGX 0</p>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-300 mb-2">Mobile Money Number</label>
+            <input id="withdrawPhone" type="tel" inputmode="tel" autocomplete="tel" required
+              class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3.5 text-white"
+              placeholder="+256 7XX XXX XXX">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-300 mb-2">Withdrawal Amount (UGX)</label>
+            <input id="withdrawAmountPage" type="number" min="5000" step="1000" required
+              class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3.5 text-white"
+              placeholder="5,000">
+            <p class="text-xs text-gray-500 mt-2">Minimum withdrawal: UGX 5,000</p>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-300 mb-2">Mobile Money Network</label>
+            <select id="withdrawMethodPage" required
+              class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3.5 text-white">
+              <option value="MTN Mobile Money">MTN Mobile Money</option>
+              <option value="Airtel Money">Airtel Money</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full rounded-xl bg-[#FFD700] text-black font-bold py-3.5 hover:bg-yellow-300 transition shadow-gold">
+            Continue Withdrawal
+          </button>
+        </form>
+      </section>
+
       <!-- ACCOUNT -->
       <section id="profilePage" class="page">
         <div class="mb-6">
@@ -943,7 +988,43 @@
   }
   function closeModal() { $('paymentModal').classList.remove('open'); }
   // Deposit now opens the dedicated mobile-money form above instead of a popup.
-  $('withdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Submit your withdrawal request and follow the payment instructions.'));
+  $('withdrawBtn').addEventListener('click', () => {
+    $('withdrawAvailableBalance').textContent = money(state.balance);
+    $('withdrawAmountPage').value = '';
+    showPage('withdrawPage');
+  });
+  $('backFromWithdrawBtn').addEventListener('click', () => showPage('walletPage'));
+
+  $('withdrawForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const phone = $('withdrawPhone').value.trim();
+    const amount = Math.floor(Number($('withdrawAmountPage').value));
+    const method = $('withdrawMethodPage').value;
+    const phoneOk = /^\+?[0-9][0-9\s().-]{6,18}$/.test(phone);
+
+    if (!phoneOk) {
+      toast('Enter a valid MTN or Airtel mobile money number.');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount < 5000) {
+      toast('Minimum withdrawal is UGX 5,000.');
+      return;
+    }
+    if (amount > state.balance) {
+      toast('Withdrawal amount is greater than your available balance.');
+      return;
+    }
+
+    state.pendingWithdrawal = {
+      phone: phone.replace(/[\s().-]/g, ''),
+      amount,
+      method,
+      createdAt: Date.now()
+    };
+    save();
+    showPage('walletPage');
+    toast('Withdrawal request details saved successfully.');
+  });
   $('closeModal').addEventListener('click', closeModal);
   $('modalOk').addEventListener('click', closeModal);
   $('paymentModal').addEventListener('click', e => { if (e.target === $('paymentModal')) closeModal(); });
