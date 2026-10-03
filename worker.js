@@ -247,7 +247,7 @@ async function ensureAdmin(env) {
 }
 
 function normalizeAuthPhone(value) {
-  let p=String(value||"").trim().replace(/[\\s().-]/g,"");
+  let p=String(value||"").trim().replace(/[\s().-]/g,"");
   if(p.startsWith("00")) p="+"+p.slice(2);
   if(p.startsWith("0")) p="+256"+p.slice(1);
   if(p.startsWith("256")) p="+"+p;
@@ -255,7 +255,7 @@ function normalizeAuthPhone(value) {
 }
 
 function isValidAuthPhone(value) {
-  return /^\\+2567\\d{8}$/.test(value);
+  return /^\+2567\d{8}$/.test(value);
 }
 
 async function register(request, env) {

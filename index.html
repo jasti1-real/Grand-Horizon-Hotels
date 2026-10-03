@@ -1049,7 +1049,7 @@
   }
 
   function showAuthPage() {
-    const path=location.pathname.replace(/\\/+$/, '') || '/';
+    const path=location.pathname.replace(/\/+$/, '') || '/';
     const params=new URLSearchParams(location.search); const register=path === '/register' || params.get('register') === '1';
     $('loginPage').classList.toggle('hidden', register);
     $('registerPage').classList.toggle('hidden', !register);
@@ -1071,12 +1071,12 @@
   }
 
   function validPhone(value) {
-    const p = value.trim().replace(/[\\s().-]/g, '');
-    return /^(?:0?256|\\+?256|0)7\\d{8}$/.test(p) || /^\\+2567\\d{8}$/.test(p);
+    const p = value.trim().replace(/[\s().-]/g, '');
+    return /^(?:0?256|\+?256|0)7\d{8}$/.test(p) || /^\+2567\d{8}$/.test(p);
   }
 
   function normalizedPhone(value) {
-    let p = value.trim().replace(/[\\s().-]/g, '');
+    let p = value.trim().replace(/[\s().-]/g, '');
     if (p.startsWith('00')) p = '+' + p.slice(2);
     if (p.startsWith('0')) p = '+256' + p.slice(1);
     if (p.startsWith('256')) p = '+' + p;
@@ -1087,7 +1087,7 @@
     e.preventDefault();
     const phone = normalizedPhone($('loginPhoneInput').value);
     const password = $('loginPasswordInput').value;
-    if (!/^\\+2567\\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
+    if (!/^\+2567\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
     if (password.length < 8) { toast('Password must be at least 8 characters.'); return; }
     try {
       await api('/api/auth/login',{method:'POST',body:JSON.stringify({phone,password})});
@@ -1101,7 +1101,7 @@
     const phone=normalizedPhone($('registerPhoneInput').value);
     const password=$('registerPasswordInput').value;
     const confirm=$('registerConfirmPasswordInput').value;
-    if (!/^\\+2567\\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
+    if (!/^\+2567\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
     if (password.length<8) { toast('Password must be at least 8 characters.'); return; }
     if (password !== confirm) { toast('Passwords do not match.'); return; }
     try {
