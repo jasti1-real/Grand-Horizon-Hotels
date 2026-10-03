@@ -568,7 +568,6 @@ export default {
   async fetch(request, env) {
     const url=new URL(request.url);
     try {
-      await ensureRulesTables(env);
       if(url.pathname.startsWith("/api/")){
         if(url.pathname==="/api/health") return json({ok:true,service:"Grand Horizon Hotels",database:"D1"});
         const admin=await adminRoute(request,env,url); if(admin) return admin;
