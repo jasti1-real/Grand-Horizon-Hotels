@@ -768,6 +768,7 @@
     state.balance = Number(data.user.balance || 0);
     state.totalEarnings = Number(data.user.total_earnings || 0);
     state.todayEarnings = Number(data.todayEarnings || 0);
+    state.checkinAvailable = data.checkinAvailable !== false;
     state.referralCode = data.referral.code;
     state.referral = data.referral;
     state.rentedRooms = (data.rooms || []).map(r => ({
@@ -840,20 +841,20 @@
     return activeRooms().reduce((sum, r) => sum + r.price, 0);
   }
 
-  function localDateKey() {
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  function eatDateKey() {
+    return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
   }
 
   function canClaimDailyCheckIn() {
-    return state.lastDailyCheckIn !== localDateKey();
+    return state.checkinAvailable !== false;
   }
 
   window.claimDailyCheckIn = async function() {
     try {
       const data=await api('/api/checkin',{method:'POST',body:JSON.stringify({})});
       state.balance += Number(data.bonus||400);
-      state.lastDailyCheckIn = localDateKey();
+      state.lastDailyCheckIn = eatDateKey();
+      state.checkinAvailable = false;
       save(); await syncServer(); renderAll();
       toast('Daily check-in claimed: UGX '+Number(data.bonus||400).toLocaleString('en-UG')+' added!');
     } catch(e) { toast(e.message); }
