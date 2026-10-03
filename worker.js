@@ -236,7 +236,7 @@ async function adminRoute(request,env,url){
   if(url.pathname==="/api/admin/login" && request.method==="POST") return adminLogin(request,env);
   if(url.pathname==="/api/admin/logout" && request.method==="POST") return adminLogout(request,env);
   if(url.pathname==="/api/admin/summary" && request.method==="GET") return adminSummary(request,env);
-  const m=url.pathname.match(/^\\/api\\/admin\\/deposits\\/(\\d+)\\/approve$/);
+  const m=url.pathname.match(/^\/api\/admin\/deposits\/(\d+)\/approve$/);
   if(m && request.method==="POST") return approveDeposit(request,env,Number(m[1]));
   return null;
 }
