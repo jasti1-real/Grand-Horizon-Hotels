@@ -42,11 +42,24 @@ async function load(){
       card('Money coming in',money(d.totalDeposits),'Total completed deposits')+
       card('Withdrawals',Number(d.withdrawalCount||0).toLocaleString(),'Completed withdrawal transactions')+
       card('Money going out',money(d.totalWithdrawals),'Total completed withdrawals');
+    $('withdrawalStatus').textContent = d.withdrawalsOpen ? 'Withdrawals are currently allowed.' : 'Withdrawals are currently closed.';
+    $('withdrawalToggle').textContent = d.withdrawalsOpen ? 'Close withdrawals' : 'Allow withdrawals';
+    $('withdrawalToggle').className = d.withdrawalsOpen
+      ? 'rounded-xl px-5 py-3 font-bold bg-red-500 text-white'
+      : 'rounded-xl px-5 py-3 font-bold bg-green-500 text-black';
   }catch(e){$('login').classList.remove('hidden');$('dashboard').classList.add('hidden');}
 }
 $('loginBtn').onclick=async()=>{try{await api('/api/admin/login',{method:'POST',body:JSON.stringify({email:$('email').value,password:$('password').value})});$('loginError').textContent='';await load();}catch(e){$('loginError').textContent=e.message}};
 $('logout').onclick=async()=>{await api('/api/admin/logout',{method:'POST'});location.reload()};
 $('refresh').onclick=load;
+$('withdrawalToggle').onclick=async()=>{
+  const current=$('withdrawalToggle').textContent==='Close withdrawals';
+  if(!confirm(current ? 'Close withdrawals for customers?' : 'Allow customers to request withdrawals?')) return;
+  try{
+    await api('/api/admin/withdrawals/status',{method:'POST',body:JSON.stringify({open:!current})});
+    await load();
+  }catch(e){alert(e.message)}
+};
 load();
 </script>
 </body></html>
