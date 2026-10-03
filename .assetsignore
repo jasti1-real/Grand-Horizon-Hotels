@@ -1,0 +1,8 @@
+worker.js
+wrangler.toml
+migrations/*
+.dev.vars
+.env
+.env.*
+.git/*
+.github/*
