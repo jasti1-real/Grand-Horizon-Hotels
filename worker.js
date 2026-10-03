@@ -559,6 +559,10 @@ export default {
         const assetUrl = new URL("/admin.html", request.url);
         return env.ASSETS.fetch(new Request(assetUrl.toString(), { method:"GET", headers: request.headers }));
       }
+      if(url.pathname==="/login" || url.pathname==="/login/" || url.pathname==="/register" || url.pathname==="/register/") {
+        const assetUrl = new URL("/index.html", request.url);
+        return env.ASSETS.fetch(new Request(assetUrl.toString(), { method:"GET", headers: request.headers }));
+      }
       return env.ASSETS.fetch(request);
     } catch(e) {
       console.error(e);
