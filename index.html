@@ -268,7 +268,7 @@
           </div>
           <button type="submit" class="auth-primary w-full py-3.5 transition">Login</button>
         </form>
-        <div class="text-center text-sm auth-small mt-5">Don't have an account? <a href="/?register=1" class="auth-create">Create Account</a></div>
+        <div class="text-center text-sm auth-small mt-5">Don't have an account? <a href="/register" class="auth-create">Create Account</a></div>
         <div class="social-links grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <a id="telegramChannelLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">📢 Telegram Channel</a>
           <a id="telegramGroupLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">👥 Telegram Group</a>
@@ -292,16 +292,11 @@
             <input id="registerPhoneInput" type="tel" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
           <div><label class="auth-label block text-sm mb-2">Password</label>
             <input id="registerPasswordInput" type="password" required minlength="8" autocomplete="new-password" class="w-full px-4 py-3.5" placeholder="At least 8 characters"></div>
-          <div><label class="auth-label block text-sm mb-2">Confirm Password</label>
-            <input id="registerConfirmPasswordInput" type="password" required minlength="8" autocomplete="new-password" class="w-full px-4 py-3.5" placeholder="Repeat your password"></div>
-          <div>
-            <label class="auth-label block text-sm mb-2">Referral Code <span class="text-gray-400">(Optional)</span></label>
-            <input id="registerReferralCodeInput" type="text" autocomplete="off" class="w-full rounded-xl bg-white border border-gray-300 px-4 py-3.5 text-gray-900 uppercase" placeholder="Enter referral code">
-            <p class="text-xs text-gray-500 mt-2">If someone invited you, enter their referral code here.</p>
-          </div>
+          <input id="registerReferralCodeInput" type="hidden" value="">
+          <p id="referralAppliedMessage" class="hidden text-sm text-green-600 font-semibold -mt-2">Referral code applied automatically.</p>
           <button type="submit" class="auth-primary w-full py-3.5 transition">Create account</button>
         </form>
-        <div class="text-center text-sm auth-small mt-5">Already registered? <a href="/?login=1" class="auth-create">Login</a></div>
+        <div class="text-center text-sm auth-small mt-5">Already registered? <a href="/login" class="auth-create">Login</a></div>
         <div class="social-links grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <a id="telegramChannelLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">📢 Telegram Channel</a>
           <a id="telegramGroupLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">👥 Telegram Group</a>
@@ -909,7 +904,7 @@
   function renderReferral() {
     const r = state.referral || {};
     const code = r.code || state.referralCode || '';
-    const link = r.link || (location.origin + '/?ref=' + encodeURIComponent(code));
+    const link = r.link || (location.origin + '/register?ref=' + encodeURIComponent(code));
     if ($('referralLink')) $('referralLink').value = link;
     if ($('refDirect')) $('refDirect').textContent = Number(r.directCustomers||0);
     if ($('refTotal')) $('refTotal').textContent = money(r.totalBonuses||0);
@@ -1050,7 +1045,7 @@
 
   function showAuthPage() {
     const path=location.pathname.replace(/\/+$/, '') || '/';
-    const params=new URLSearchParams(location.search); const register=path === '/register' || params.get('register') === '1';
+    const params=new URLSearchParams(location.search); const register=path === '/register' || params.get('register') === '1' || !!params.get('ref');
     $('loginPage').classList.toggle('hidden', register);
     $('registerPage').classList.toggle('hidden', !register);
   }
@@ -1100,10 +1095,8 @@
     e.preventDefault();
     const phone=normalizedPhone($('registerPhoneInput').value);
     const password=$('registerPasswordInput').value;
-    const confirm=$('registerConfirmPasswordInput').value;
     if (!/^\+2567\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
     if (password.length<8) { toast('Password must be at least 8 characters.'); return; }
-    if (password !== confirm) { toast('Passwords do not match.'); return; }
     try {
       const referralCode=$('registerReferralCodeInput').value.trim().toUpperCase() || new URLSearchParams(location.search).get('ref') || '';
       await api('/api/auth/register',{method:'POST',body:JSON.stringify({phone,password,referralCode})});
@@ -1120,7 +1113,10 @@
   });
 
   const referralFromUrl = new URLSearchParams(location.search).get('ref');
-  if (referralFromUrl && $('registerReferralCodeInput')) $('registerReferralCodeInput').value = referralFromUrl.toUpperCase();
+  if (referralFromUrl && $('registerReferralCodeInput')) {
+    $('registerReferralCodeInput').value = referralFromUrl.trim().toUpperCase();
+    $('referralAppliedMessage')?.classList.remove('hidden');
+  }
 
   $('forgotPasswordBtn')?.addEventListener('click', () => toast('Please contact Grand Horizon Hotels support to reset your password.'));
 
