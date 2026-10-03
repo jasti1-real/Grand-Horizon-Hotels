@@ -246,12 +246,24 @@ async function ensureAdmin(env) {
   }
 }
 
+function normalizeAuthPhone(value) {
+  let p=String(value||"").trim().replace(/[\\s().-]/g,"");
+  if(p.startsWith("00")) p="+"+p.slice(2);
+  if(p.startsWith("0")) p="+256"+p.slice(1);
+  if(p.startsWith("256")) p="+"+p;
+  return p;
+}
+
+function isValidAuthPhone(value) {
+  return /^\\+2567\\d{8}$/.test(value);
+}
+
 async function register(request, env) {
-  const { login, password, referralCode } = await body(request);
-  const normalized = String(login || "").trim().toLowerCase();
-  if (!normalized || !password || password.length < 8) return json({error:"Use a valid login and a password of at least 8 characters."},400);
+  const { phone, password, referralCode } = await body(request);
+  const normalized = normalizeAuthPhone(phone);
+  if (!isValidAuthPhone(normalized) || !password || password.length < 8) return json({error:"Use a valid Ugandan telephone number and a password of at least 8 characters."},400);
   const exists = await env.DB.prepare("SELECT id FROM users WHERE login=?").bind(normalized).first();
-  if (exists) return json({error:"An account with that login already exists."},409);
+  if (exists) return json({error:"An account with that telephone number already exists."},409);
   let referrer = null;
   if (referralCode) referrer = await env.DB.prepare("SELECT id FROM users WHERE referral_code=?").bind(String(referralCode).trim().toUpperCase()).first();
   const rec = await makePasswordRecord(password);
@@ -283,8 +295,10 @@ async function grantWelcomeBonus(env, userId) {
 }
 
 async function login(request, env) {
-  const { login, password } = await body(request);
-  const row = await env.DB.prepare("SELECT * FROM users WHERE login=?").bind(String(login||"").trim().toLowerCase()).first();
+  const { phone, password } = await body(request);
+  const normalized = normalizeAuthPhone(phone);
+  if (!isValidAuthPhone(normalized)) return json({error:"Enter a valid Ugandan telephone number."},400);
+  const row = await env.DB.prepare("SELECT * FROM users WHERE login=?").bind(normalized).first();
   if (!row || !(await verifyPassword(String(password||""),row.password_hash,row.password_salt))) return json({error:"Invalid login details."},401);
   await grantWelcomeBonus(env,row.id);
   const fresh = await env.DB.prepare("SELECT id,login,referral_code,balance,total_earnings FROM users WHERE id=?").bind(row.id).first();
