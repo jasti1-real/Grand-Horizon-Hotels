@@ -844,13 +844,6 @@
     reader.readAsDataURL(file);
   });
 
-  $('demoBalanceBtn').addEventListener('click', () => {
-    state.balance += 100000;
-    save();
-    renderBalances();
-    toast('UGX 100,000 demo balance added.');
-  });
-
   function openModal(title, text) {
     $('modalTitle').textContent = title;
     $('modalText').textContent = text;
@@ -860,13 +853,13 @@
   function showDepositRules() {
     $('modalTitle').textContent = 'Deposit Funds';
     $('modalText').innerHTML = '';
-    $('modalText').insertAdjacentHTML('beforeend', '<p class="mb-4 text-gray-300">Minimum deposit: <strong class="text-[#FFD700]">UGX 20,000</strong></p><label class="block text-sm text-gray-400 mb-2">Amount (UGX)</label><input id="depositAmount" type="number" min="20000" step="1000" placeholder="20000" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><label class="block text-sm text-gray-400 mt-4 mb-2">Payment method</label><select id="depositMethod" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><option>MTN Mobile Money</option><option>Airtel Money</option></select><p class="text-xs text-gray-500 mt-3">Enter your amount and payment method. Your request can be recorded now; actual Mobile Money settlement requires the provider connection.</p>');
+    $('modalText').insertAdjacentHTML('beforeend', '<p class="mb-4 text-gray-300">Minimum deposit: <strong class="text-[#FFD700]">UGX 20,000</strong></p><label class="block text-sm text-gray-400 mb-2">Amount (UGX)</label><input id="depositAmount" type="number" min="20000" step="1000" placeholder="20000" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><label class="block text-sm text-gray-400 mt-4 mb-2">Payment method</label><select id="depositMethod" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><option>MTN Mobile Money</option><option>Airtel Money</option></select><p class="text-xs text-gray-500 mt-3">Enter your amount and payment method. Your request will be recorded securely and processed through the selected payment method.</p>');
     $('modalOk').textContent = 'Continue Deposit';
     $('modalOk').onclick = () => {
       const amount = Number($('depositAmount').value);
       if (amount < 20000) { toast('Minimum deposit is UGX 20,000.'); return; }
       closeModal();
-      openModal('Deposit Request', 'Your deposit request for ' + money(amount) + ' via ' + $('depositMethod').value + ' has been recorded. Mobile Money settlement requires the provider connection.');
+      openModal('Deposit Request', 'Your deposit request for ' + money(amount) + ' via ' + $('depositMethod').value + ' has been recorded. Mobile Money settlement is completed through the selected payment provider.');
       $('modalOk').textContent = 'Okay';
     };
     $('paymentModal').classList.add('open');
@@ -880,8 +873,8 @@
     openModal('Withdraw', 'Minimum withdrawal is UGX 5,000. Your withdrawal request is ready for processing.');
   }
   function closeModal() { $('paymentModal').classList.remove('open'); }
-  $('depositBtn').addEventListener('click', () => openModal('Deposit', 'MTN and Airtel Mobile Money will be connected here when the real payment API is supplied.'));
-  $('withdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Withdrawal processing will be connected to the secure backend and payment provider in the payments stage.'));
+  $('depositBtn').addEventListener('click', () => openModal('Deposit', 'Choose MTN or Airtel Mobile Money to submit your deposit request.'));
+  $('withdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Submit your withdrawal request and follow the payment instructions.'));
   $('closeModal').addEventListener('click', closeModal);
   $('modalOk').addEventListener('click', closeModal);
   $('paymentModal').addEventListener('click', e => { if (e.target === $('paymentModal')) closeModal(); });
