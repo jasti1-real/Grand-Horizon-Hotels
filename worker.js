@@ -260,31 +260,38 @@ function isValidAuthPhone(value) {
 
 async function register(request, env) {
   try {
+    let stage="request";
     const { phone, password, referralCode } = await body(request);
+    stage="validate";
     const normalized = normalizeAuthPhone(phone);
     if (!isValidAuthPhone(normalized) || !password || password.length < 8) return json({error:"Use a valid Ugandan telephone number and a password of at least 8 characters."},400);
     const exists = await env.DB.prepare("SELECT id FROM users WHERE login=?").bind(normalized).first();
     if (exists) return json({error:"An account with that telephone number already exists."},409);
     let referrer = null;
     if (referralCode) referrer = await env.DB.prepare("SELECT id FROM users WHERE referral_code=?").bind(String(referralCode).trim().toUpperCase()).first();
+    stage="password";
     const rec = await makePasswordRecord(password);
     const code = refCode();
     const created = now();
+    stage="insert";
     await env.DB.prepare("INSERT INTO users (login,password_hash,password_salt,referral_code,created_at) VALUES (?,?,?,?,?)")
       .bind(normalized,rec.hash,rec.salt,code,created).run();
     const createdUser = await env.DB.prepare("SELECT id,login,referral_code FROM users WHERE login=? LIMIT 1").bind(normalized).first();
     if (!createdUser) throw new Error("Registration could not create the customer record.");
     const userId = createdUser.id;
+    stage="referral";
     if (referrer) {
       await env.DB.prepare("INSERT INTO referrals (referrer_id,referred_user_id,rate_percent,created_at) VALUES (?,?,?,?)")
         .bind(referrer.id,userId,25,created).run();
     }
+    stage="welcome";
     await grantWelcomeBonus(env,userId);
+    stage="session";
     const token = await createSession(env,userId);
     return json({ok:true,user:{id:userId,login:normalized,referralCode:createdUser.referral_code,balance:5000,totalEarnings:5000},welcomeBonus:5000},200,{"Set-Cookie":setCookie(COOKIE,token,SESSION_DAYS*86400)});
   } catch (e) {
     console.error("Registration error", e?.message || e);
-    return json({error:"Registration failed on the server. Please try again."},500);
+    return json({error:"Registration failed at "+stage+". Please try again."},500);
   }
 }
 async function grantWelcomeBonus(env, userId) {
