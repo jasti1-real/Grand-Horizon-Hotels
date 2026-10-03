@@ -183,59 +183,56 @@
     }
     .auth-page .auth-small { color:#6e6e73; }
 
-    /* Registration page reference layout */
+    /* Registration page — same existing light/iPhone UI */
     #registerPage {
       background:
-        radial-gradient(circle at 50% 8%, rgba(18,110,62,.16), transparent 28%),
-        linear-gradient(180deg,#020604 0%,#000 100%) !important;
-      color:#fff;
+        radial-gradient(circle at 50% -10%, rgba(255,215,0,.14), transparent 32%),
+        linear-gradient(180deg,#fbfbfd 0%,#f2f2f7 100%) !important;
+      color:var(--ios-text);
     }
-    #registerPage .auth-title { color:#fff !important; }
+    #registerPage .auth-title { color:var(--ios-text) !important; }
     #registerPage .auth-subtitle,
-    #registerPage .auth-small { color:rgba(255,255,255,.72) !important; }
+    #registerPage .auth-small { color:var(--ios-secondary) !important; }
     #registerPage .auth-card {
-      background:rgba(7,9,8,.94) !important;
-      border:1px solid rgba(255,255,255,.12) !important;
-      box-shadow:0 24px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.03) !important;
+      background:rgba(255,255,255,.76) !important;
+      border:1px solid rgba(255,255,255,.9) !important;
+      box-shadow:0 20px 60px rgba(31,38,135,.10),inset 0 1px 0 rgba(255,255,255,.9) !important;
     }
     #registerPage .auth-logo {
-      background:#050505 !important;
-      border-color:rgba(255,255,255,.92) !important;
-      box-shadow:0 0 20px rgba(255,255,255,.08) !important;
+      background:#fff !important;
+      border-color:rgba(15,23,42,.10) !important;
+      box-shadow:0 10px 30px rgba(31,38,135,.10) !important;
     }
-    #registerPage .auth-label { color:#fff !important; }
+    #registerPage .auth-label { color:#374151 !important; }
     #registerPage input {
-      background:#050605 !important;
-      color:#fff !important;
-      border-color:rgba(255,255,255,.18) !important;
-      border-radius:15px !important;
-      min-height:56px;
+      background:rgba(255,255,255,.82) !important;
+      color:var(--ios-text) !important;
+      border-color:var(--ios-border) !important;
+      border-radius:17px !important;
+      min-height:54px;
     }
-    #registerPage input::placeholder { color:rgba(255,255,255,.40) !important; }
+    #registerPage input::placeholder { color:#8e8e93 !important; }
     #registerPage input:focus {
-      border-color:rgba(44,220,103,.75) !important;
-      box-shadow:0 0 0 3px rgba(44,220,103,.09) !important;
+      border-color:rgba(214,169,0,.7) !important;
+      box-shadow:0 0 0 4px rgba(214,169,0,.12) !important;
     }
     #registerPage .auth-primary {
-      background:#24cf5b !important;
-      color:#031108 !important;
+      background:#FFD700 !important;
+      color:#111827 !important;
       min-height:56px;
-      border-radius:15px !important;
-      box-shadow:none !important;
-      text-transform:none;
+      border-radius:17px !important;
+      box-shadow:0 8px 24px rgba(214,169,0,.18) !important;
     }
-    #registerPage .auth-primary:hover { background:#2bdd68 !important; }
-    #registerPage .auth-create { color:#20d85d !important; }
-
+    #registerPage .auth-primary:hover { background:#f5cf00 !important; }
+    #registerPage .auth-create { color:#b88b00 !important; }
     @media (max-width:640px) {
-      #registerPage { padding:28px 14px 36px !important; }
+      #registerPage { padding:28px 18px 36px !important; }
       #registerPage .auth-shell { max-width:400px; }
-      #registerPage .auth-logo { width:82px; height:82px; margin-bottom:25px; }
-      #registerPage .auth-card { padding:28px 22px !important; }
-      #registerPage .auth-title { font-size:2rem; text-align:left; }
+      #registerPage .auth-card { padding:24px !important; }
+      #registerPage .auth-title { font-size:1.9rem; text-align:left; }
       #registerPage .auth-subtitle { text-align:left; }
-      #registerPage .auth-card form { gap:18px !important; }
     }
+
 
     @media (max-width:640px) {
       .auth-page { min-height:100svh; padding:28px 18px 36px; }
