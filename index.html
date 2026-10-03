@@ -124,80 +124,70 @@
       .nav-btn { min-width: 64px; }
     }
 
-    /* Premium dark login / registration */
+    /* Auth layout — existing Grand Horizon light UI */
     .auth-page {
       background:
-        radial-gradient(circle at 50% 18%, rgba(25,255,120,.18), transparent 26%),
-        radial-gradient(circle at 15% 55%, rgba(0,100,45,.25), transparent 34%),
-        radial-gradient(circle at 85% 70%, rgba(0,180,80,.13), transparent 30%),
-        linear-gradient(145deg,#030504 0%,#07100a 48%,#020403 100%);
-      color:#fff;
-    }
-    .auth-page::before {
-      content:"";
-      position:absolute;
-      inset:0;
-      background:linear-gradient(120deg,transparent 20%,rgba(44,255,123,.04) 50%,transparent 80%);
-      pointer-events:none;
+        radial-gradient(circle at 50% -10%, rgba(255,215,0,.14), transparent 32%),
+        linear-gradient(180deg,#fbfbfd 0%,#f2f2f7 100%);
+      color:var(--ios-text);
     }
     .auth-page .auth-shell { position:relative; z-index:1; }
     .auth-page .auth-logo {
-      width:86px;height:86px;border-radius:50%;
-      background:rgba(0,0,0,.45);
-      border:2px solid rgba(255,255,255,.9);
-      box-shadow:0 0 22px rgba(255,255,255,.12),0 0 55px rgba(0,255,105,.12);
-      display:flex;align-items:center;justify-content:center;margin:0 auto 28px;
+      width:82px;height:82px;border-radius:50%;
+      background:#fff;
+      border:2px solid rgba(15,23,42,.10);
+      box-shadow:0 10px 30px rgba(31,38,135,.10);
+      display:flex;align-items:center;justify-content:center;margin:0 auto 22px;
+      overflow:hidden;
     }
     .auth-page .auth-logo img { width:58px;height:58px;border-radius:50%;object-fit:cover; }
-    .auth-page .auth-title { color:#fff !important; font-size:2.05rem; font-weight:800; letter-spacing:-.04em; }
-    .auth-page .auth-subtitle { color:rgba(255,255,255,.72) !important; }
+    .auth-page .auth-title { color:var(--ios-text) !important; font-size:2.05rem; font-weight:800; letter-spacing:-.04em; }
+    .auth-page .auth-subtitle { color:var(--ios-secondary) !important; }
     .auth-page .auth-card {
-      background:linear-gradient(145deg,rgba(16,31,20,.88),rgba(4,11,7,.9)) !important;
-      border:1px solid rgba(255,255,255,.10) !important;
-      border-radius:26px !important;
-      box-shadow:0 30px 90px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.06) !important;
-      backdrop-filter:blur(22px) saturate(130%);
-      -webkit-backdrop-filter:blur(22px) saturate(130%);
+      background:rgba(255,255,255,.76) !important;
+      border:1px solid rgba(255,255,255,.9) !important;
+      border-radius:28px !important;
+      box-shadow:0 20px 60px rgba(31,38,135,.10), inset 0 1px 0 rgba(255,255,255,.9) !important;
+      backdrop-filter:blur(24px) saturate(180%);
+      -webkit-backdrop-filter:blur(24px) saturate(180%);
     }
-    .auth-page .auth-label { color:#fff !important; font-weight:700; }
+    .auth-page .auth-label { color:#374151 !important; font-weight:600; }
     .auth-page input {
-      background:rgba(10,20,13,.72) !important;
-      color:#fff !important;
-      border:1px solid rgba(255,255,255,.22) !important;
-      border-radius:16px !important;
-      min-height:58px;
-      box-shadow:inset 0 1px 2px rgba(0,0,0,.3) !important;
+      background:rgba(255,255,255,.82) !important;
+      color:var(--ios-text) !important;
+      border:1px solid var(--ios-border) !important;
+      border-radius:17px !important;
+      min-height:54px;
     }
-    .auth-page input::placeholder { color:rgba(255,255,255,.46) !important; }
-    .auth-page input:focus {
-      border-color:rgba(39,255,126,.85) !important;
-      box-shadow:0 0 0 4px rgba(39,255,126,.10),0 0 20px rgba(39,255,126,.08) !important;
-    }
+    .auth-page input::placeholder { color:#8e8e93 !important; }
     .auth-page .auth-primary {
-      background:linear-gradient(180deg,#3dff91,#12e878) !important;
-      color:#06200f !important;
+      background:#FFD700 !important;
+      color:#111827 !important;
       border:0 !important;
-      min-height:58px;
+      min-height:56px;
       border-radius:17px !important;
       font-weight:800;
-      box-shadow:0 10px 28px rgba(18,232,120,.24) !important;
+      box-shadow:0 8px 24px rgba(214,169,0,.18) !important;
     }
-    .auth-page .auth-primary:hover { box-shadow:0 14px 34px rgba(18,232,120,.34) !important; }
-    .auth-page .auth-secondary {
-      color:#39ff91 !important;
+    .auth-page .auth-primary:hover { background:#f5cf00 !important; }
+    .auth-page .auth-link {
+      color:#374151 !important;
+      border-color:var(--ios-border) !important;
+      border-radius:17px !important;
+    }
+    .auth-page .auth-link:hover { color:#b88b00 !important; border-color:rgba(214,169,0,.55) !important; }
+    .auth-page .social-links { display:none; }
+    .auth-page .auth-create {
+      color:#b88b00;
       font-weight:800;
     }
-    .auth-page .auth-link {
-      color:rgba(255,255,255,.78) !important;
-      border-color:rgba(255,255,255,.16) !important;
-    }
-    .auth-page .auth-link:hover { color:#39ff91 !important; border-color:rgba(57,255,145,.55) !important; }
-    .auth-page .social-links { display:none; }
+    .auth-page .auth-small { color:#6e6e73; }
     @media (max-width:640px) {
       .auth-page { min-height:100svh; padding:28px 18px 36px; }
       .auth-page .auth-card { padding:24px !important; }
       .auth-page .auth-title { font-size:1.9rem; }
     }
+
   </style>
 </head>
 <body>
@@ -217,9 +207,16 @@
             <input id="loginEmailInput" type="text" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="you@example.com or +256 7XX XXX XXX"></div>
           <div><label class="auth-label block text-sm mb-2">Password</label>
             <input id="loginPasswordInput" type="password" required minlength="8" autocomplete="current-password" class="w-full px-4 py-3.5" placeholder="••••••••"></div>
+          <div class="flex items-center justify-between text-sm mt-1">
+            <label class="auth-small inline-flex items-center gap-2 cursor-pointer">
+              <input id="rememberLogin" type="checkbox" class="!min-h-0 !w-4 !h-4 !rounded !p-0">
+              <span>Remember me</span>
+            </label>
+            <button type="button" id="forgotPasswordBtn" class="auth-create">Forgot password?</button>
+          </div>
           <button type="submit" class="auth-primary w-full py-3.5 transition">Login</button>
         </form>
-        <a href="/register" class="auth-link mt-3 block w-full border font-semibold py-3.5 text-center transition">Create Account</a>
+        <div class="text-center text-sm auth-small mt-5">Don't have an account? <a href="/register" class="auth-create">Create Account</a></div>
         <div class="social-links grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <a id="telegramChannelLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">📢 Telegram Channel</a>
           <a id="telegramGroupLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">👥 Telegram Group</a>
@@ -252,7 +249,7 @@
           </div>
           <button type="submit" class="auth-primary w-full py-3.5 transition">Create Account</button>
         </form>
-        <a href="/login" class="auth-link mt-3 block w-full border font-semibold py-3.5 text-center transition">Back to Login</a>
+        <div class="text-center text-sm auth-small mt-5">Already have an account? <a href="/login" class="auth-create">Login</a></div>
         <div class="social-links grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <a id="telegramChannelLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">📢 Telegram Channel</a>
           <a id="telegramGroupLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">👥 Telegram Group</a>
@@ -1065,6 +1062,8 @@
 
   const referralFromUrl = new URLSearchParams(location.search).get('ref');
   if (referralFromUrl && $('registerReferralCodeInput')) $('registerReferralCodeInput').value = referralFromUrl.toUpperCase();
+
+  $('forgotPasswordBtn')?.addEventListener('click', () => toast('Please contact Grand Horizon Hotels support to reset your password.'));
 
   showAuthPage();
 
