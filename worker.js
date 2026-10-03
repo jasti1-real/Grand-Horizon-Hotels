@@ -147,7 +147,7 @@ async function marzWebhook(request,env) {
   return json({ok:true});
 }
 
-async function refCode() { return "GHH-" + crypto.randomUUID().replaceAll("-", "").slice(0,8).toUpperCase(); }
+function refCode() { return "GHH-" + crypto.randomUUID().replaceAll("-", "").slice(0,8).toUpperCase(); }
 
 async function createSession(env, userId, admin=false) {
   const token = crypto.randomUUID() + crypto.randomUUID();
