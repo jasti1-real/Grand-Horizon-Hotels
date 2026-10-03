@@ -259,8 +259,8 @@ function isValidAuthPhone(value) {
 }
 
 async function register(request, env) {
+  let stage="request";
   try {
-    let stage="request";
     const { phone, password, referralCode } = await body(request);
     stage="validate";
     const normalized = normalizeAuthPhone(phone);
