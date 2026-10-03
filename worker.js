@@ -444,7 +444,7 @@ async function me(request,env){
   }
   const todayEarnings=await env.DB.prepare("SELECT COALESCE(SUM(amount),0) total FROM product_earnings WHERE user_id=? AND earning_date=?").bind(user.id,eatDateKey()).first();
   const referrer=await env.DB.prepare("SELECT u.login,u.referral_code FROM referrals r JOIN users u ON u.id=r.referrer_id WHERE r.referred_user_id=? LIMIT 1").bind(user.id).first();
-  return json({authenticated:true,user:fresh,rooms:rooms.results||[],todayEarnings:Number(todayEarnings?.total||0),referral:{code:fresh.referral_code,link:new URL("/?ref="+encodeURIComponent(fresh.referral_code),"https://grand-horizon-hotels.investmentreal95.workers.dev").toString(),directCustomers:Number(direct?.count||0),totalBonuses:Number(rewards?.total||0),levels,referrer}});
+  return json({authenticated:true,user:fresh,rooms:rooms.results||[],todayEarnings:Number(todayEarnings?.total||0),referral:{code:fresh.referral_code,link:new URL("/register?ref="+encodeURIComponent(fresh.referral_code),"https://grand-horizon-hotels.investmentreal95.workers.dev").toString(),directCustomers:Number(direct?.count||0),totalBonuses:Number(rewards?.total||0),levels,referrer}});
 }
 
 async function adminLogin(request,env){
