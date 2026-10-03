@@ -642,6 +642,7 @@
     state.email = data.user.login;
     state.balance = Number(data.user.balance || 0);
     state.totalEarnings = Number(data.user.total_earnings || 0);
+    state.todayEarnings = Number(data.todayEarnings || 0);
     state.referralCode = data.referral.code;
     state.referral = data.referral;
     state.rentedRooms = (data.rooms || []).map(r => ({
@@ -727,6 +728,7 @@
     try {
       const data=await api('/api/checkin',{method:'POST',body:JSON.stringify({})});
       state.balance += Number(data.bonus||400);
+      state.lastDailyCheckIn = localDateKey();
       save(); await syncServer(); renderAll();
       toast('Daily check-in claimed: UGX '+Number(data.bonus||400).toLocaleString('en-UG')+' added!');
     } catch(e) { toast(e.message); }
@@ -791,7 +793,7 @@
     $('profileEmail').textContent = state.email;
     $('accountDisplayName').textContent = displayName();
     $('accountIdValue').textContent = state.email;
-    $('referralCode').textContent = referralCode();
+    $('referralCode').textContent = state.referralCode || referralCode();
     $('accountBalance').textContent = money(state.balance);
     $('accountEarnings').textContent = money(accruedProfit());
 
@@ -881,7 +883,7 @@
     if (!$('homeWalletBalance')) return;
     $('homeWelcomeEmail').textContent = state.email;
     $('homeWalletBalance').textContent = money(state.balance);
-    $('homeTodayEarnings').textContent = money(dailyProfit());
+    $('homeTodayEarnings').textContent = money(state.todayEarnings || 0);
     $('homePurchasedCount').textContent = activeRooms().length;
     $('homeTotalInvested').textContent = money(totalInvested());
     $('homeTotalEarned').textContent = money(accruedProfit());
