@@ -271,7 +271,10 @@ export default {
         if(url.pathname==="/api/rent" && request.method==="POST") return rent(request,env);
         return json({error:"API route not found."},404);
       }
-      if(url.pathname==="/admin" || url.pathname==="/admin/") return env.ASSETS.fetch(new Request(new URL("/admin.html",request.url),request));
+      if(url.pathname==="/admin" || url.pathname==="/admin/") {
+        const assetUrl = new URL("/admin.html", request.url);
+        return env.ASSETS.fetch(new Request(assetUrl.toString(), { method:"GET", headers: request.headers }));
+      }
       return env.ASSETS.fetch(request);
     } catch(e) {
       console.error(e);
