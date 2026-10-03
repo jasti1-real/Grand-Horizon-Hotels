@@ -432,7 +432,6 @@ async function rent(request, env) {
 async function me(request,env){
   const user=await currentUser(request,env); if(!user) return json({authenticated:false});
   await ensureRulesTables(env);
-  await creditDailyEarnings(env);
   const fresh=await env.DB.prepare("SELECT id,login,referral_code,balance,total_earnings FROM users WHERE id=?").bind(user.id).first();
   const rooms=await env.DB.prepare("SELECT id,package_id,price,daily_return,started_at,status FROM investments WHERE user_id=? ORDER BY id DESC").bind(user.id).all();
   const direct=await env.DB.prepare("SELECT COUNT(*) count FROM referrals WHERE referrer_id=?").bind(user.id).first();
@@ -443,8 +442,9 @@ async function me(request,env){
     levels.push({level,count:Number(row?.count||0),total:Number(row?.total||0),ratePercent:REFERRAL_LEVELS[level-1]});
   }
   const todayEarnings=await env.DB.prepare("SELECT COALESCE(SUM(amount),0) total FROM product_earnings WHERE user_id=? AND earning_date=?").bind(user.id,eatDateKey()).first();
+  const checkinToday=await env.DB.prepare("SELECT id FROM daily_checkins WHERE user_id=? AND checkin_date=? LIMIT 1").bind(user.id,eatDateKey()).first();
   const referrer=await env.DB.prepare("SELECT u.login,u.referral_code FROM referrals r JOIN users u ON u.id=r.referrer_id WHERE r.referred_user_id=? LIMIT 1").bind(user.id).first();
-  return json({authenticated:true,user:fresh,rooms:rooms.results||[],todayEarnings:Number(todayEarnings?.total||0),referral:{code:fresh.referral_code,link:new URL("/register?ref="+encodeURIComponent(fresh.referral_code),"https://grand-horizon-hotels.investmentreal95.workers.dev").toString(),directCustomers:Number(direct?.count||0),totalBonuses:Number(rewards?.total||0),levels,referrer}});
+  return json({authenticated:true,user:fresh,rooms:rooms.results||[],todayEarnings:Number(todayEarnings?.total||0),checkinAvailable:!checkinToday,referral:{code:fresh.referral_code,link:new URL("/register?ref="+encodeURIComponent(fresh.referral_code),"https://grand-horizon-hotels.investmentreal95.workers.dev").toString(),directCustomers:Number(direct?.count||0),totalBonuses:Number(rewards?.total||0),levels,referrer}});
 }
 
 async function adminLogin(request,env){
@@ -557,6 +557,8 @@ async function adminRoute(request,env,url){
 
 async function runDailyEarnings(env) {
   await ensureRulesTables(env);
+  // 21:00 UTC is exactly 00:00 East Africa Time (EAT).
+  // This is the only automatic entry point for a new day's product earnings.
   const target=eatDateKey();
   await creditDailyEarnings(env,target);
 }
