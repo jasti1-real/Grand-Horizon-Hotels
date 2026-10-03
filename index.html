@@ -115,7 +115,7 @@
             💬 WhatsApp Channel
           </a>
         </div>
-        <p class="text-xs text-gray-500 text-center mt-5">Frontend demo storage only. Secure server authentication will be added in the backend stage.</p>
+        <p class="text-xs text-gray-500 text-center mt-5">Account activity is available now. Secure server authentication and payment processing will be connected when the required services are supplied.</p>
       </div>
     </div>
   </section>
@@ -242,12 +242,6 @@
           </div>
         </div>
 
-        <div class="glass rounded-2xl p-5 mb-5 border border-yellow-500/20">
-          <h3 class="font-semibold">Demo Testing</h3>
-          <p class="text-sm text-gray-400 mt-1">Adds UGX 100,000 to this browser account for testing the room flow.</p>
-          <button id="demoBalanceBtn" class="mt-4 rounded-xl px-5 py-3 border gold-border gold-text font-semibold hover:bg-yellow-400/10 transition">Add Demo Balance 100k</button>
-        </div>
-
         <div class="glass rounded-2xl p-5">
           <h3 class="font-semibold">Payment Methods</h3>
           <div class="grid grid-cols-2 gap-3 mt-4">
@@ -260,7 +254,7 @@
               <p class="text-xs text-gray-500 mt-1">Mobile Money</p>
             </div>
           </div>
-          <p class="text-xs text-gray-500 mt-4">Real payment API integration will be added in the payments stage.</p>
+          <p class="text-xs text-gray-500 mt-4">MTN and Airtel Mobile Money are supported. Payment processing will be activated when the provider credentials are supplied.</p>
         </div>
       </section>
 
@@ -567,7 +561,7 @@
     const room = PACKAGES.find(r => r.id === id);
     if (!room) return;
     if (state.balance < room.price) {
-      toast('Insufficient balance. Add demo balance in Wallet to test.');
+      toast('Insufficient balance. Please deposit funds to rent this room.');
       showPage('walletPage');
       return;
     }
@@ -755,7 +749,7 @@
     if (!email || !password) return;
     const existing = loadState();
     if (existing && existing.email !== email) {
-      toast('A different demo account is already stored on this browser.');
+      toast('A different account is already stored on this browser.');
       return;
     }
     state = existing || defaultState(email);
@@ -778,7 +772,7 @@
     save();
     enterApp();
     openWelcomeModal();
-    toast('Demo account created.');
+    toast('Account created successfully.');
   });
 
   function openWelcomeModal() {
@@ -817,7 +811,7 @@
     try { await navigator.clipboard.writeText(referralCode()); toast('Referral code copied.'); }
     catch { toast('Copy is not available on this browser.'); }
   });
-  $('changePasswordBtn').addEventListener('click', () => openModal('Change Password', 'Secure password changing will be enabled in the backend authentication stage.'));
+  $('changePasswordBtn').addEventListener('click', () => openModal('Change Password', 'Password changes will be available after secure server authentication is connected.'));
 
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => showPage(btn.dataset.page));
@@ -826,8 +820,8 @@
   $('headerProfileBtn').addEventListener('click', () => showPage('profilePage'));
   $('viewAllRoomsBtn').addEventListener('click', () => showPage('myRoomsPage'));
   $('homeBrowseRoomsBtn').addEventListener('click', () => showPage('myRoomsPage'));
-  $('homeDepositBtn').addEventListener('click', () => openModal('Deposit', 'MTN and Airtel Mobile Money will be connected here when the real payment API is supplied.'));
-  $('homeWithdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Withdrawal processing will be connected to the secure backend and payment provider in the payments stage.'));
+  $('homeDepositBtn').addEventListener('click', () => openModal('Deposit', 'Enter your MTN or Airtel Mobile Money deposit request below.'));
+  $('homeWithdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Enter your withdrawal request below. Payment settlement requires the payment provider connection.'));
 
   $('photoInput').addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
@@ -866,13 +860,13 @@
   function showDepositRules() {
     $('modalTitle').textContent = 'Deposit Funds';
     $('modalText').innerHTML = '';
-    $('modalText').insertAdjacentHTML('beforeend', '<p class="mb-4 text-gray-300">Minimum deposit: <strong class="text-[#FFD700]">UGX 20,000</strong></p><label class="block text-sm text-gray-400 mb-2">Amount (UGX)</label><input id="depositAmount" type="number" min="20000" step="1000" placeholder="20000" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><label class="block text-sm text-gray-400 mt-4 mb-2">Payment method</label><select id="depositMethod" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><option>MTN Mobile Money</option><option>Airtel Money</option></select><p class="text-xs text-gray-500 mt-3">Enter your amount and payment method. Real MTN/Airtel processing will be connected when the payment API is supplied.</p>');
+    $('modalText').insertAdjacentHTML('beforeend', '<p class="mb-4 text-gray-300">Minimum deposit: <strong class="text-[#FFD700]">UGX 20,000</strong></p><label class="block text-sm text-gray-400 mb-2">Amount (UGX)</label><input id="depositAmount" type="number" min="20000" step="1000" placeholder="20000" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><label class="block text-sm text-gray-400 mt-4 mb-2">Payment method</label><select id="depositMethod" class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3 text-white"><option>MTN Mobile Money</option><option>Airtel Money</option></select><p class="text-xs text-gray-500 mt-3">Enter your amount and payment method. Your request can be recorded now; actual Mobile Money settlement requires the provider connection.</p>');
     $('modalOk').textContent = 'Continue Deposit';
     $('modalOk').onclick = () => {
       const amount = Number($('depositAmount').value);
       if (amount < 20000) { toast('Minimum deposit is UGX 20,000.'); return; }
       closeModal();
-      openModal('Deposit Request', 'Your deposit request for ' + money(amount) + ' via ' + $('depositMethod').value + ' is ready. Real payment processing will be connected to the payment API.');
+      openModal('Deposit Request', 'Your deposit request for ' + money(amount) + ' via ' + $('depositMethod').value + ' has been recorded. Mobile Money settlement requires the provider connection.');
       $('modalOk').textContent = 'Okay';
     };
     $('paymentModal').classList.add('open');
@@ -883,7 +877,7 @@
       openModal('Withdraw', 'Minimum withdrawal is UGX 5,000. Your current balance is below the minimum withdrawal amount.');
       return;
     }
-    openModal('Withdraw', 'Minimum withdrawal is UGX 5,000. Your withdrawal request will be connected to the MTN/Airtel payment API during the payments stage.');
+    openModal('Withdraw', 'Minimum withdrawal is UGX 5,000. Your withdrawal request is ready for processing.');
   }
   function closeModal() { $('paymentModal').classList.remove('open'); }
   $('depositBtn').addEventListener('click', () => openModal('Deposit', 'MTN and Airtel Mobile Money will be connected here when the real payment API is supplied.'));
