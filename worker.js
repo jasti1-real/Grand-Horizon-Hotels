@@ -201,14 +201,15 @@ async function adminLogout(request,env){
 
 async function adminSummary(request,env){
   if(!await requireAdmin(request,env)) return json({error:"Administrator login required."},401);
-  const [stats,deposits,withdrawals,referrals,users] = await Promise.all([
-    env.DB.prepare("SELECT (SELECT COUNT(*) FROM users) users,(SELECT COALESCE(SUM(balance),0) FROM users) totalBalances,(SELECT COUNT(*) FROM transactions WHERE type='deposit' AND status='pending') pendingDeposits,(SELECT COUNT(*) FROM investments WHERE status='active') investments,(SELECT COALESCE(SUM(bonus_amount),0) FROM referral_credits) referralBonuses").first(),
-    env.DB.prepare("SELECT t.id,t.amount,t.method,t.reference,t.created_at,u.login FROM transactions t JOIN users u ON u.id=t.user_id WHERE t.type='deposit' AND t.status='pending' ORDER BY t.id DESC LIMIT 50").all(),
-    env.DB.prepare("SELECT t.id,t.amount,t.method,t.reference,t.created_at,u.login FROM transactions t JOIN users u ON u.id=t.user_id WHERE t.type='withdrawal' AND t.status='pending' ORDER BY t.id DESC LIMIT 50").all(),
-    env.DB.prepare("SELECT r.id,r.status,r.bonus_amount,u1.login referrer_login,u2.login referred_login FROM referrals r JOIN users u1 ON u1.id=r.referrer_id JOIN users u2 ON u2.id=r.referred_user_id ORDER BY r.id DESC LIMIT 50").all(),
-    env.DB.prepare("SELECT id,login,balance,total_earnings,created_at FROM users ORDER BY id DESC LIMIT 100").all()
-  ]);
-  return json({ ...stats, deposits:deposits.results||[], withdrawals:withdrawals.results||[], referrals:referrals.results||[], usersList:users.results||[] });
+  const stats = await env.DB.prepare(`
+    SELECT
+      (SELECT COUNT(*) FROM users) AS users,
+      (SELECT COUNT(*) FROM transactions WHERE type='deposit' AND status='completed') AS depositCount,
+      (SELECT COALESCE(SUM(amount),0) FROM transactions WHERE type='deposit' AND status='completed') AS totalDeposits,
+      (SELECT COUNT(*) FROM transactions WHERE type='withdrawal' AND status='completed') AS withdrawalCount,
+      (SELECT COALESCE(SUM(amount),0) FROM transactions WHERE type='withdrawal' AND status='completed') AS totalWithdrawals
+  `).first();
+  return json(stats);
 }
 
 async function approveWithdrawal(request,env,id){
