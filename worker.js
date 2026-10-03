@@ -78,6 +78,17 @@ async function adminConfigured(env) {
   return !!env.ADMIN_PASSWORD;
 }
 
+async function ensureSettings(env) {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)").run();
+  await env.DB.prepare("INSERT OR IGNORE INTO app_settings (key,value) VALUES ('withdrawals_open','1')").run();
+}
+
+async function withdrawalsOpen(env) {
+  await ensureSettings(env);
+  const row = await env.DB.prepare("SELECT value FROM app_settings WHERE key='withdrawals_open'").first();
+  return row?.value !== "0";
+}
+
 async function ensureAdmin(env) {
   const existing = await env.DB.prepare("SELECT id FROM admin_users WHERE id='owner'").first();
   if (!existing) {
@@ -149,6 +160,7 @@ async function deposit(request, env) {
 
 async function withdrawal(request, env) {
   const user=await currentUser(request,env); if(!user) return json({error:"Please sign in."},401);
+  if(!await withdrawalsOpen(env)) return json({error:"Withdrawals are currently closed by the administrator."},503);
   const {amount,method}=await body(request); const value=Math.floor(Number(amount));
   if(!Number.isFinite(value)||value<5000) return json({error:"Minimum withdrawal is UGX 5,000."},400);
   if(!["MTN Mobile Money","Airtel Money"].includes(method)) return json({error:"Choose MTN Mobile Money or Airtel Money."},400);
@@ -209,7 +221,7 @@ async function adminSummary(request,env){
       (SELECT COUNT(*) FROM transactions WHERE type='withdrawal' AND status='completed') AS withdrawalCount,
       (SELECT COALESCE(SUM(amount),0) FROM transactions WHERE type='withdrawal' AND status='completed') AS totalWithdrawals
   `).first();
-  return json(stats);
+  return json({...stats, withdrawalsOpen: await withdrawalsOpen(env)});
 }
 
 async function approveWithdrawal(request,env,id){
@@ -246,10 +258,20 @@ async function approveDeposit(request,env,id){
   return json({ok:true,credited:tx.amount,referralBonus:bonus});
 }
 
+async function setWithdrawalStatus(request,env) {
+  if(!await requireAdmin(request,env)) return json({error:"Administrator login required."},401);
+  const {open} = await body(request);
+  if(typeof open !== "boolean") return json({error:"Choose whether withdrawals should be open or closed."},400);
+  await ensureSettings(env);
+  await env.DB.prepare("UPDATE app_settings SET value=? WHERE key='withdrawals_open'").bind(open ? "1" : "0").run();
+  return json({ok:true,withdrawalsOpen:open});
+}
+
 async function adminRoute(request,env,url){
   if(url.pathname==="/api/admin/login" && request.method==="POST") return adminLogin(request,env);
   if(url.pathname==="/api/admin/logout" && request.method==="POST") return adminLogout(request,env);
   if(url.pathname==="/api/admin/summary" && request.method==="GET") return adminSummary(request,env);
+  if(url.pathname==="/api/admin/withdrawals/status" && request.method==="POST") return setWithdrawalStatus(request,env);
   const m=url.pathname.match(/^\/api\/admin\/deposits\/(\d+)\/approve$/);
   if(m && request.method==="POST") return approveDeposit(request,env,Number(m[1]));
   return null;
