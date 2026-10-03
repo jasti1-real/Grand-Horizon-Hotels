@@ -181,6 +181,8 @@ async function withdrawal(request, env) {
   if(!Number.isFinite(value)||value<5000) return json({error:"Minimum withdrawal is UGX 5,000."},400);
   if(!["MTN Mobile Money","Airtel Money"].includes(method)) return json({error:"Choose MTN Mobile Money or Airtel Money."},400);
   const fresh=await env.DB.prepare("SELECT balance FROM users WHERE id=?").bind(user.id).first();
+  const room = await env.DB.prepare("SELECT id FROM investments WHERE user_id=? AND status='active' LIMIT 1").bind(user.id).first();
+  if(!room) return json({error:"Purchase a room first before withdrawing your welcome bonus."},403);
   if(Number(fresh.balance)<value) return json({error:"Insufficient balance."},400);
   const reference="WDR-"+crypto.randomUUID().replaceAll("-","").slice(0,18).toUpperCase();
   await env.DB.prepare("INSERT INTO transactions (user_id,type,amount,method,status,reference,created_at) VALUES (?, 'withdrawal', ?, ?, 'pending', ?, ?)")
