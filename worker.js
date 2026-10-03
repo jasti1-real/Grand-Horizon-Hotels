@@ -2,7 +2,8 @@ const COOKIE = "ghh_session";
 const ADMIN_COOKIE = "ghh_admin";
 const SESSION_DAYS = 7;
 const ROOM_TERM_DAYS = 30;
-const REFERRAL_RATE = 5;
+const REFERRAL_LEVELS = [25, 2, 1];
+const WITHDRAWAL_TAX_PERCENT = 15;
 const DAILY_CHECKIN_BONUS = 400;
 
 const json = (data, status=200, extra={}) => Response.json(data, { status, headers: { "Cache-Control": "no-store", ...extra } });
@@ -40,7 +41,10 @@ function setCookie(name, value, maxAge) {
 function clearCookie(name) { return setCookie(name, "", 0); }
 async function body(request) { try { return await request.json(); } catch { return {}; } }
 function now() { return Date.now(); }
-function dateKey() { return new Date().toISOString().slice(0,10); }
+function eatDateKey(ms=Date.now()) {
+  return new Date(ms + 3 * 60 * 60 * 1000).toISOString().slice(0,10);
+}
+function dateKey() { return eatDateKey(); }
 function refCode() { return "GHH-" + crypto.randomUUID().replaceAll("-", "").slice(0,8).toUpperCase(); }
 
 async function createSession(env, userId, admin=false) {
@@ -76,6 +80,46 @@ async function requireAdmin(request, env) {
 
 async function adminConfigured(env) {
   return !!env.ADMIN_PASSWORD;
+}
+
+async function ensureRulesTables(env) {
+  await env.DB.batch([
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS deposit_funds (user_id INTEGER PRIMARY KEY, available_amount INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL)"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS referral_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT, deposit_transaction_id INTEGER NOT NULL, beneficiary_id INTEGER NOT NULL, source_user_id INTEGER NOT NULL, level INTEGER NOT NULL, rate_percent INTEGER NOT NULL, bonus_amount INTEGER NOT NULL, created_at INTEGER NOT NULL, UNIQUE(deposit_transaction_id,beneficiary_id,level))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS product_earnings (id INTEGER PRIMARY KEY AUTOINCREMENT, investment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, earning_date TEXT NOT NULL, amount INTEGER NOT NULL, created_at INTEGER NOT NULL, UNIQUE(investment_id,earning_date))"),
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS withdrawal_details (transaction_id INTEGER PRIMARY KEY, tax_percent INTEGER NOT NULL, tax_amount INTEGER NOT NULL, net_amount INTEGER NOT NULL)")
+  ]);
+}
+
+async function referralChain(env, userId) {
+  const chain = [];
+  let current = userId;
+  for (let level=0; level<3; level++) {
+    const row = await env.DB.prepare("SELECT referrer_id FROM referrals WHERE referred_user_id=? ORDER BY id ASC LIMIT 1").bind(current).first();
+    if (!row) break;
+    chain.push({ userId: row.referrer_id, level: level + 1 });
+    current = row.referrer_id;
+  }
+  return chain;
+}
+
+async function creditDailyEarnings(env, targetDate=eatDateKey()) {
+  await ensureRulesTables(env);
+  const nowTs = now();
+  const investments = await env.DB.prepare("SELECT id,user_id,daily_return,started_at,status FROM investments WHERE status='active' AND started_at < ? AND started_at >= ?")
+    .bind(nowTs, nowTs - ROOM_TERM_DAYS * 86400000).all();
+  for (const inv of investments.results || []) {
+    const startDate = eatDateKey(inv.started_at);
+    if (startDate >= targetDate) continue;
+    const exists = await env.DB.prepare("SELECT id FROM product_earnings WHERE investment_id=? AND earning_date=?").bind(inv.id,targetDate).first();
+    if (exists) continue;
+    const statements = [
+      env.DB.prepare("INSERT INTO product_earnings (investment_id,user_id,earning_date,amount,created_at) VALUES (?,?,?,?,?)").bind(inv.id,inv.user_id,targetDate,inv.daily_return,nowTs),
+      env.DB.prepare("UPDATE users SET balance=balance+?,total_earnings=total_earnings+? WHERE id=?").bind(inv.daily_return,inv.daily_return,inv.user_id),
+      env.DB.prepare("INSERT INTO transactions (user_id,type,amount,status,reference,created_at) VALUES (?, 'earning', ?, 'completed', ?, ?)").bind(inv.user_id,inv.daily_return,"EARN-"+inv.id+"-"+targetDate,nowTs)
+    ];
+    await env.DB.batch(statements);
+  }
 }
 
 async function ensureSettings(env) {
@@ -114,7 +158,7 @@ async function register(request, env) {
   const userId = result.meta.last_row_id;
   if (referrer) {
     await env.DB.prepare("INSERT INTO referrals (referrer_id,referred_user_id,rate_percent,created_at) VALUES (?,?,?,?)")
-      .bind(referrer.id,userId,REFERRAL_RATE,created).run();
+      .bind(referrer.id,userId,25,created).run();
   }
   await grantWelcomeBonus(env,userId);
   const token = await createSession(env,userId);
@@ -165,6 +209,7 @@ async function checkin(request, env) {
 
 async function deposit(request, env) {
   const user=await currentUser(request,env); if(!user) return json({error:"Please sign in."},401);
+  await ensureRulesTables(env);
   const {amount,method}=await body(request); const value=Math.floor(Number(amount));
   if(!Number.isFinite(value)||value<20000) return json({error:"Minimum deposit is UGX 20,000."},400);
   if(!["MTN Mobile Money","Airtel Money"].includes(method)) return json({error:"Choose MTN Mobile Money or Airtel Money."},400);
@@ -176,26 +221,34 @@ async function deposit(request, env) {
 
 async function withdrawal(request, env) {
   const user=await currentUser(request,env); if(!user) return json({error:"Please sign in."},401);
+  await ensureRulesTables(env);
   if(!await withdrawalsOpen(env)) return json({error:"Withdrawals are currently closed by the administrator."},503);
   const {amount,method}=await body(request); const value=Math.floor(Number(amount));
   if(!Number.isFinite(value)||value<5000) return json({error:"Minimum withdrawal is UGX 5,000."},400);
   if(!["MTN Mobile Money","Airtel Money"].includes(method)) return json({error:"Choose MTN Mobile Money or Airtel Money."},400);
   const fresh=await env.DB.prepare("SELECT balance FROM users WHERE id=?").bind(user.id).first();
-  const room = await env.DB.prepare("SELECT id FROM investments WHERE user_id=? AND status='active' LIMIT 1").bind(user.id).first();
-  if(!room) return json({error:"Purchase a room first before withdrawing your welcome bonus."},403);
+  const eligibility=await env.DB.prepare("SELECT (SELECT COUNT(*) FROM transactions WHERE user_id=? AND type='deposit' AND status='completed') deposit_count,(SELECT COUNT(*) FROM investments WHERE user_id=? AND status='active' AND started_at >= ?) active_rooms")
+    .bind(user.id,user.id,now()-ROOM_TERM_DAYS*86400000).first();
+  if(Number(eligibility.deposit_count)<1 || Number(eligibility.active_rooms)<1) return json({error:"Withdrawals require at least one successful deposit and an active purchased product."},403);
   if(Number(fresh.balance)<value) return json({error:"Insufficient balance."},400);
+  const tax=Math.floor(value*WITHDRAWAL_TAX_PERCENT/100);
+  const net=value-tax;
   const reference="WDR-"+crypto.randomUUID().replaceAll("-","").slice(0,18).toUpperCase();
-  await env.DB.prepare("INSERT INTO transactions (user_id,type,amount,method,status,reference,created_at) VALUES (?, 'withdrawal', ?, ?, 'pending', ?, ?)")
+  const result=await env.DB.prepare("INSERT INTO transactions (user_id,type,amount,method,status,reference,created_at) VALUES (?, 'withdrawal', ?, ?, 'pending', ?, ?)")
     .bind(user.id,value,method,reference,now()).run();
-  return json({ok:true,status:"pending",reference,message:"Withdrawal request recorded."});
+  await env.DB.prepare("INSERT INTO withdrawal_details (transaction_id,tax_percent,tax_amount,net_amount) VALUES (?,?,?,?)").bind(result.meta.last_row_id,WITHDRAWAL_TAX_PERCENT,tax,net).run();
+  return json({ok:true,status:"pending",reference,grossAmount:value,taxAmount:tax,taxPercent:WITHDRAWAL_TAX_PERCENT,netAmount:net,message:"Withdrawal request recorded."});
 }
 
 async function rent(request, env) {
   const user=await currentUser(request,env); if(!user) return json({error:"Please sign in."},401);
+  await ensureRulesTables(env);
   const {packageId}=await body(request);
   const room=await env.DB.prepare("SELECT id,price_ugx,daily_figure_ugx FROM rooms WHERE id=? AND enabled=1").bind(Number(packageId)).first();
   if(!room) return json({error:"Room package is not available."},400);
   const p=Number(room.price_ugx), daily=Number(room.daily_figure_ugx);
+  const depositRow=await env.DB.prepare("SELECT available_amount FROM deposit_funds WHERE user_id=?").bind(user.id).first();
+  if(Number(depositRow?.available_amount||0)<p) return json({error:"This product can only be purchased after a successful deposit. Deposit funds are required for the room purchase."},403);
   const fresh=await env.DB.prepare("SELECT balance FROM users WHERE id=?").bind(user.id).first();
   if(Number(fresh.balance)<p) return json({error:"Insufficient balance. Please deposit funds."},400);
   const started=now();
@@ -203,6 +256,7 @@ async function rent(request, env) {
     .bind(user.id,packageId,p,daily,started).run();
   await env.DB.batch([
     env.DB.prepare("UPDATE users SET balance=balance-? WHERE id=?").bind(p,user.id),
+    env.DB.prepare("UPDATE deposit_funds SET available_amount=available_amount-?,updated_at=? WHERE user_id=?").bind(p,started,user.id),
     env.DB.prepare("INSERT INTO transactions (user_id,type,amount,status,reference,created_at) VALUES (?, 'room_purchase', ?, 'completed', ?, ?)").bind(user.id,p,"ROOM-"+investment.meta.last_row_id,started)
   ]);
   return json({ok:true,investmentId:investment.meta.last_row_id,expiresAt:started+ROOM_TERM_DAYS*86400000});
@@ -210,8 +264,19 @@ async function rent(request, env) {
 
 async function me(request,env){
   const user=await currentUser(request,env); if(!user) return json({authenticated:false});
+  await ensureRulesTables(env);
+  await creditDailyEarnings(env);
+  const fresh=await env.DB.prepare("SELECT id,login,referral_code,balance,total_earnings FROM users WHERE id=?").bind(user.id).first();
   const rooms=await env.DB.prepare("SELECT id,package_id,price,daily_return,started_at,status FROM investments WHERE user_id=? ORDER BY id DESC").bind(user.id).all();
-  return json({authenticated:true,user,rooms:rooms.results||[]});
+  const direct=await env.DB.prepare("SELECT COUNT(*) count FROM referrals WHERE referrer_id=?").bind(user.id).first();
+  const rewards=await env.DB.prepare("SELECT COALESCE(SUM(bonus_amount),0) total FROM referral_rewards WHERE beneficiary_id=?").bind(user.id).first();
+  const levels=[];
+  for(let level=1;level<=3;level++){
+    const row=await env.DB.prepare("SELECT COUNT(*) count,COALESCE(SUM(bonus_amount),0) total FROM referral_rewards WHERE beneficiary_id=? AND level=?").bind(user.id,level).first();
+    levels.push({level,count:Number(row?.count||0),total:Number(row?.total||0),ratePercent:REFERRAL_LEVELS[level-1]});
+  }
+  const referrer=await env.DB.prepare("SELECT u.login,u.referral_code FROM referrals r JOIN users u ON u.id=r.referrer_id WHERE r.referred_user_id=? LIMIT 1").bind(user.id).first();
+  return json({authenticated:true,user:fresh,rooms:rooms.results||[],referral:{code:fresh.referral_code,link:new URL("/?ref="+encodeURIComponent(fresh.referral_code),"https://grand-horizon-hotels.investmentreal95.workers.dev").toString(),directCustomers:Number(direct?.count||0),totalBonuses:Number(rewards?.total||0),levels,referrer}});
 }
 
 async function adminLogin(request,env){
@@ -237,45 +302,50 @@ async function adminSummary(request,env){
       (SELECT COUNT(*) FROM transactions WHERE type='deposit' AND status='completed') AS depositCount,
       (SELECT COALESCE(SUM(amount),0) FROM transactions WHERE type='deposit' AND status='completed') AS totalDeposits,
       (SELECT COUNT(*) FROM transactions WHERE type='withdrawal' AND status='completed') AS withdrawalCount,
-      (SELECT COALESCE(SUM(amount),0) FROM transactions WHERE type='withdrawal' AND status='completed') AS totalWithdrawals
+      (SELECT COALESCE(SUM(COALESCE(wd.net_amount,t.amount)),0) FROM transactions t LEFT JOIN withdrawal_details wd ON wd.transaction_id=t.id WHERE t.type='withdrawal' AND t.status='completed') AS totalWithdrawals
   `).first();
   return json({...stats, withdrawalsOpen: await withdrawalsOpen(env)});
 }
 
 async function approveWithdrawal(request,env,id){
   if(!await requireAdmin(request,env)) return json({error:"Administrator login required."},401);
+  await ensureRulesTables(env);
   const tx=await env.DB.prepare("SELECT * FROM transactions WHERE id=? AND type='withdrawal'").bind(id).first();
   if(!tx) return json({error:"Withdrawal not found."},404);
   if(tx.status!=="pending") return json({error:"This withdrawal has already been processed."},409);
+  const detail=await env.DB.prepare("SELECT net_amount FROM withdrawal_details WHERE transaction_id=?").bind(id).first();
   const result=await env.DB.prepare("UPDATE users SET balance=balance-? WHERE id=? AND balance>=?").bind(tx.amount,tx.user_id,tx.amount).run();
   if(!result.meta.changes) return json({error:"Customer no longer has enough available balance."},409);
   await env.DB.prepare("UPDATE transactions SET status='completed' WHERE id=?").bind(id).run();
-  return json({ok:true,paid:tx.amount});
+  return json({ok:true,paid:Number(detail?.net_amount||tx.amount),tax:Number(tx.amount)-Number(detail?.net_amount||tx.amount)});
 }
 
 async function approveDeposit(request,env,id){
   if(!await requireAdmin(request,env)) return json({error:"Administrator login required."},401);
+  await ensureRulesTables(env);
   const tx=await env.DB.prepare("SELECT * FROM transactions WHERE id=? AND type='deposit'").bind(id).first();
   if(!tx) return json({error:"Deposit not found."},404);
   if(tx.status!=="pending") return json({error:"This deposit has already been processed."},409);
-  const referral=await env.DB.prepare("SELECT * FROM referrals WHERE referred_user_id=? AND status='pending'").bind(tx.user_id).first();
-  const bonus=referral ? Math.floor(Number(tx.amount)*REFERRAL_RATE/100) : 0;
   const ts=now();
+  const chain=await referralChain(env,tx.user_id);
   const statements=[
     env.DB.prepare("UPDATE transactions SET status='completed' WHERE id=?").bind(id),
-    env.DB.prepare("UPDATE users SET balance=balance+? WHERE id=?").bind(tx.amount,tx.user_id)
+    env.DB.prepare("UPDATE users SET balance=balance+? WHERE id=?").bind(tx.amount,tx.user_id),
+    env.DB.prepare("INSERT INTO deposit_funds (user_id,available_amount,updated_at) VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE SET available_amount=available_amount+excluded.available_amount,updated_at=excluded.updated_at").bind(tx.user_id,tx.amount,ts)
   ];
-  if(referral && bonus>0){
-    statements.push(
-      env.DB.prepare("UPDATE users SET balance=balance+?,total_earnings=total_earnings+? WHERE id=?").bind(bonus,bonus,referral.referrer_id),
-      env.DB.prepare("INSERT INTO referral_credits (referral_id,referrer_id,deposit_transaction_id,deposit_amount,rate_percent,bonus_amount,created_at) VALUES (?,?,?,?,?,?,?)").bind(referral.id,referral.referrer_id,id,tx.amount,REFERRAL_RATE,bonus,ts),
-      env.DB.prepare("UPDATE referrals SET first_eligible_deposit_id=?,bonus_amount=?,status='credited',credited_at=? WHERE id=?").bind(id,bonus,ts,referral.id)
-    );
+  for(const item of chain){
+    const rate=REFERRAL_LEVELS[item.level-1];
+    const bonus=Math.floor(Number(tx.amount)*rate/100);
+    if(bonus>0){
+      statements.push(
+        env.DB.prepare("UPDATE users SET balance=balance+?,total_earnings=total_earnings+? WHERE id=?").bind(bonus,bonus,item.userId),
+        env.DB.prepare("INSERT OR IGNORE INTO referral_rewards (deposit_transaction_id,beneficiary_id,source_user_id,level,rate_percent,bonus_amount,created_at) VALUES (?,?,?,?,?,?,?)").bind(id,item.userId,tx.user_id,item.level,rate,bonus,ts)
+      );
+    }
   }
   await env.DB.batch(statements);
-  return json({ok:true,credited:tx.amount,referralBonus:bonus});
+  return json({ok:true,credited:tx.amount,referralLevels:chain.map(x=>x.level)});
 }
-
 async function setWithdrawalStatus(request,env) {
   if(!await requireAdmin(request,env)) return json({error:"Administrator login required."},401);
   const {open} = await body(request);
@@ -295,10 +365,20 @@ async function adminRoute(request,env,url){
   return null;
 }
 
+async function runDailyEarnings(env) {
+  await ensureRulesTables(env);
+  const target=eatDateKey();
+  await creditDailyEarnings(env,target);
+}
+
 export default {
+  async scheduled(controller, env) {
+    if (controller.cron === "0 21 * * *") await runDailyEarnings(env);
+  },
   async fetch(request, env) {
     const url=new URL(request.url);
     try {
+      await ensureRulesTables(env);
       if(url.pathname.startsWith("/api/")){
         if(url.pathname==="/api/health") return json({ok:true,service:"Grand Horizon Hotels",database:"D1"});
         const admin=await adminRoute(request,env,url); if(admin) return admin;
