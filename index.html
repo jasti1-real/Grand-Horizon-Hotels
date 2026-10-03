@@ -935,7 +935,11 @@
     showPage('walletPage');
     toast('Deposit request details saved successfully.');
   });
-  $('homeWithdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Enter your withdrawal request below. Payment settlement requires the payment provider connection.'));
+  $('homeWithdrawBtn').addEventListener('click', () => {
+    $('withdrawAvailableBalance').textContent = money(state.balance);
+    $('withdrawAmountPage').value = '';
+    showPage('withdrawPage');
+  });
 
   $('photoInput').addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
