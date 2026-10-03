@@ -1,0 +1,19 @@
+name = "grand-horizon-hotels"
+main = "worker.js"
+compatibility_date = "2026-10-02"
+
+[assets]
+directory = "."
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/admin", "/admin/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "grand-horizon-hotels-db"
+database_id = "f7e9cf2c-e6dc-44b1-9d16-7be4a200344a"
+migrations_dir = "migrations"
+
+[vars]
+REFERRAL_RATE_PERCENT = "5"
+DAILY_CHECKIN_BONUS = "400"
+ROOM_TERM_DAYS = "30"
