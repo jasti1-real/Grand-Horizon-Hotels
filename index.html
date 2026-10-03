@@ -678,7 +678,11 @@
 
   <!-- WELCOME BONUS POPUP -->
   <div id="welcomeModal" class="welcome-modal fixed inset-0 z-[70] items-center justify-center bg-black/75 backdrop-blur-sm px-4">
-    <div class="welcome-card w-full max-w-md rounded-3xl bg-white border border-[#FFD700]/30 shadow-2xl overflow-hidden">
+    <div class="welcome-card relative w-full max-w-md rounded-3xl bg-white border border-[#FFD700]/30 shadow-2xl overflow-hidden">
+      <button id="closeWelcomeX" type="button" aria-label="Close welcome popup"
+        class="absolute top-3 right-3 z-10 h-10 w-10 rounded-full bg-gray-100 text-gray-700 text-2xl leading-none flex items-center justify-center hover:bg-gray-200 transition">
+        &times;
+      </button>
       <div class="p-6 text-center border-b border-gray-200">
         <div class="mx-auto h-14 w-14 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/30 flex items-center justify-center text-2xl">🎁</div>
         <h2 class="text-2xl font-bold mt-3 gold-text">Welcome to Grand Horizon Hotels</h2>
@@ -700,10 +704,6 @@
         </div>
 
         <div class="grid grid-cols-1 gap-3">
-          <a id="welcomeWebsiteLink" href="https://grand-horizon-hotels.investmentreal95.workers.dev/" target="_blank" rel="noopener noreferrer"
-             class="rounded-xl bg-[#FFD700] text-black font-bold py-3 text-center hover:bg-yellow-300 transition">
-            🌐 Visit Grand Horizon Hotels
-          </a>
           <a id="welcomeTelegramLink" href="#" target="_blank" rel="noopener noreferrer"
              class="rounded-xl border border-sky-500/40 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">
             ✈️ Join Telegram
@@ -1132,6 +1132,7 @@
     $('welcomeModal').classList.remove('open');
   }
   $('closeWelcomeModal').addEventListener('click', closeWelcomeModal);
+  $('closeWelcomeX').addEventListener('click', closeWelcomeModal);
   $('welcomeModal').addEventListener('click', e => {
     if (e.target === $('welcomeModal')) closeWelcomeModal();
   });
