@@ -226,6 +226,46 @@
         <div id="roomsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       </section>
 
+      <!-- DEPOSIT PAGE -->
+      <section id="depositPage" class="page">
+        <div class="mb-6">
+          <button id="backFromDepositBtn" class="text-gray-400 hover:text-[#FFD700] text-sm font-semibold mb-4">← Back to Wallet</button>
+          <p class="text-xs uppercase tracking-[0.2em] gold-text font-semibold">Mobile Money</p>
+          <h2 class="text-2xl sm:text-3xl font-bold mt-1">Deposit Funds</h2>
+          <p class="text-gray-400 mt-1">Enter the number you will use for your MTN or Airtel Mobile Money deposit.</p>
+        </div>
+
+        <form id="depositForm" class="glass rounded-3xl p-6 space-y-5">
+          <div>
+            <label class="block text-sm text-gray-300 mb-2">Mobile Money Number</label>
+            <input id="depositPhone" type="tel" inputmode="tel" autocomplete="tel" required
+              class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3.5 text-white"
+              placeholder="+256 7XX XXX XXX">
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-300 mb-2">Deposit Amount (UGX)</label>
+            <input id="depositAmountPage" type="number" min="20000" step="1000" required
+              class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3.5 text-white"
+              placeholder="20,000">
+            <p class="text-xs text-gray-500 mt-2">Minimum deposit: UGX 20,000</p>
+          </div>
+
+          <div>
+            <label class="block text-sm text-gray-300 mb-2">Mobile Money Network</label>
+            <select id="depositMethodPage" required
+              class="w-full rounded-xl bg-[#121212] border border-gray-700 px-4 py-3.5 text-white">
+              <option value="MTN Mobile Money">MTN Mobile Money</option>
+              <option value="Airtel Money">Airtel Money</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full rounded-xl bg-[#FFD700] text-black font-bold py-3.5 hover:bg-yellow-300 transition shadow-gold">
+            Continue Deposit
+          </button>
+        </form>
+      </section>
+
       <!-- WALLET -->
       <section id="walletPage" class="page">
         <div class="mb-6">
@@ -820,7 +860,36 @@
   $('headerProfileBtn').addEventListener('click', () => showPage('profilePage'));
   $('viewAllRoomsBtn').addEventListener('click', () => showPage('myRoomsPage'));
   $('homeBrowseRoomsBtn').addEventListener('click', () => showPage('myRoomsPage'));
-  $('homeDepositBtn').addEventListener('click', () => openModal('Deposit', 'Enter your MTN or Airtel Mobile Money deposit request below.'));
+  $('homeDepositBtn').addEventListener('click', () => showPage('depositPage'));
+  $('depositBtn').addEventListener('click', () => showPage('depositPage'));
+  $('backFromDepositBtn').addEventListener('click', () => showPage('walletPage'));
+
+  $('depositForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const phone = $('depositPhone').value.trim();
+    const amount = Number($('depositAmountPage').value);
+    const method = $('depositMethodPage').value;
+    const phoneOk = /^\+?[0-9][0-9\s().-]{6,18}$/.test(phone);
+
+    if (!phoneOk) {
+      toast('Enter a valid MTN or Airtel mobile money number.');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount < 20000) {
+      toast('Minimum deposit is UGX 20,000.');
+      return;
+    }
+
+    state.pendingDeposit = {
+      phone: phone.replace(/[\s().-]/g, ''),
+      amount: Math.floor(amount),
+      method,
+      createdAt: Date.now()
+    };
+    save();
+    showPage('walletPage');
+    toast('Deposit request details saved successfully.');
+  });
   $('homeWithdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Enter your withdrawal request below. Payment settlement requires the payment provider connection.'));
 
   $('photoInput').addEventListener('change', e => {
@@ -873,7 +942,7 @@
     openModal('Withdraw', 'Minimum withdrawal is UGX 5,000. Your withdrawal request is ready for processing.');
   }
   function closeModal() { $('paymentModal').classList.remove('open'); }
-  $('depositBtn').addEventListener('click', () => openModal('Deposit', 'Choose MTN or Airtel Mobile Money to submit your deposit request.'));
+  // Deposit now opens the dedicated mobile-money form above instead of a popup.
   $('withdrawBtn').addEventListener('click', () => openModal('Withdraw', 'Submit your withdrawal request and follow the payment instructions.'));
   $('closeModal').addEventListener('click', closeModal);
   $('modalOk').addEventListener('click', closeModal);
