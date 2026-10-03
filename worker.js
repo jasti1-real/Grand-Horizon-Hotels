@@ -75,7 +75,7 @@ async function requireAdmin(request, env) {
 }
 
 async function adminConfigured(env) {
-  return !!(env.ADMIN_PASSWORD && env.ADMIN_SESSION_SECRET);
+  return !!env.ADMIN_PASSWORD;
 }
 
 async function ensureAdmin(env) {
@@ -184,7 +184,7 @@ async function me(request,env){
 }
 
 async function adminLogin(request,env){
-  if(!await adminConfigured(env)) return json({error:"Admin security is not configured yet. Set ADMIN_PASSWORD and ADMIN_SESSION_SECRET in Cloudflare Worker secrets."},503);
+  if(!await adminConfigured(env)) return json({error:"Admin security is not configured yet. Set ADMIN_PASSWORD in Cloudflare Worker secrets."},503);
   const {email,password}=await body(request);
   if(String(email||"").trim().toLowerCase() !== String(env.ADMIN_EMAIL||"owner").trim().toLowerCase() || String(password||"") !== String(env.ADMIN_PASSWORD)) return json({error:"Invalid administrator credentials."},401);
   await ensureAdmin(env);
