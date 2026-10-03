@@ -255,8 +255,8 @@
       </div>
       <div class="auth-card glass rounded-3xl p-6 sm:p-8 shadow-2xl">
         <form id="loginForm" class="space-y-5">
-          <div><label class="auth-label block text-sm mb-2">Email or Phone Number</label>
-            <input id="loginEmailInput" type="text" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
+          <div><label class="auth-label block text-sm mb-2">Telephone Number</label>
+            <input id="loginEmailInput" type="tel" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
           <div><label class="auth-label block text-sm mb-2">Password</label>
             <input id="loginPasswordInput" type="password" required minlength="8" autocomplete="current-password" class="w-full px-4 py-3.5" placeholder="••••••••"></div>
           <div class="flex items-center justify-between text-sm mt-1">
@@ -288,8 +288,8 @@
       </div>
       <div class="auth-card glass rounded-3xl p-6 sm:p-8 shadow-2xl">
         <form id="registerForm" class="space-y-5">
-          <div><label class="auth-label block text-sm mb-2">Email or Phone Number</label>
-            <input id="registerEmailInput" type="text" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="you@example.com or +256 7XX XXX XXX"></div>
+          <div><label class="auth-label block text-sm mb-2">Telephone Number</label>
+            <input id="registerEmailInput" type="tel" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
           <div><label class="auth-label block text-sm mb-2">Password</label>
             <input id="registerPasswordInput" type="password" required minlength="8" autocomplete="new-password" class="w-full px-4 py-3.5" placeholder="At least 8 characters"></div>
           <div><label class="auth-label block text-sm mb-2">Confirm Password</label>
@@ -1070,43 +1070,44 @@
     location.href='/login';
   }
 
-  function validLoginId(value) {
-    const v = value.trim();
-    const emailOk = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v);
-    const phoneOk = /^\\+?[0-9][0-9\\s().-]{6,18}$/.test(v);
-    return emailOk || phoneOk;
+  function validPhone(value) {
+    const p = value.trim().replace(/[\\s().-]/g, '');
+    return /^(?:0?256|\\+?256|0)7\\d{8}$/.test(p) || /^\\+2567\\d{8}$/.test(p);
   }
 
-  function normalizedLoginId(value) {
-    const v = value.trim();
-    return v.includes('@') ? v.toLowerCase() : v.replace(/[\\s().-]/g, '');
+  function normalizedPhone(value) {
+    let p = value.trim().replace(/[\\s().-]/g, '');
+    if (p.startsWith('00')) p = '+' + p.slice(2);
+    if (p.startsWith('0')) p = '+256' + p.slice(1);
+    if (p.startsWith('256')) p = '+' + p;
+    return p;
   }
 
   $('loginForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const login = normalizedLoginId($('loginEmailInput').value);
+    const phone = normalizedPhone($('loginEmailInput').value);
     const password = $('loginPasswordInput').value;
-    if (!validLoginId($('loginEmailInput').value)) { toast('Enter a valid email address or phone number.'); return; }
+    if (!/^\\+2567\\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
     if (password.length < 8) { toast('Password must be at least 8 characters.'); return; }
     try {
-      await api('/api/auth/login',{method:'POST',body:JSON.stringify({login,password})});
-      state = loadState() || defaultState(login); state.email=login; state.loggedIn=true;
+      await api('/api/auth/login',{method:'POST',body:JSON.stringify({phone,password})});
+      state = loadState() || defaultState(phone); state.email=phone; state.loggedIn=true;
       await syncServer(); enterApp(); renderAll();
     } catch(e) { toast(e.message); }
   });
 
   $('registerForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const login=normalizedLoginId($('registerEmailInput').value);
+    const phone=normalizedPhone($('registerEmailInput').value);
     const password=$('registerPasswordInput').value;
     const confirm=$('registerConfirmPasswordInput').value;
-    if (!validLoginId($('registerEmailInput').value)) { toast('Enter a valid email address or phone number.'); return; }
+    if (!/^\\+2567\\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
     if (password.length<8) { toast('Password must be at least 8 characters.'); return; }
     if (password !== confirm) { toast('Passwords do not match.'); return; }
     try {
       const referralCode=$('registerReferralCodeInput').value.trim().toUpperCase() || new URLSearchParams(location.search).get('ref') || '';
-      await api('/api/auth/register',{method:'POST',body:JSON.stringify({login,password,referralCode})});
-      state=defaultState(login); state.email=login; state.loggedIn=true;
+      await api('/api/auth/register',{method:'POST',body:JSON.stringify({phone,password,referralCode})});
+      state=defaultState(phone); state.email=phone; state.loggedIn=true;
       await syncServer(); enterApp(); renderAll(); openWelcomeModal();
       toast('Account created. UGX 5,000 welcome bonus added.');
     } catch(e) { toast(e.message); }
