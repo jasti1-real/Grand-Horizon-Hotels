@@ -626,18 +626,18 @@
           <h3 class="text-xl font-bold mt-1">Telegram & WhatsApp</h3>
           <p class="text-sm text-gray-600 mt-1">Join our Telegram community or WhatsApp channel for updates and support.</p>
 
-          <div class="space-y-3 mt-4">
-            <a id="accountTelegramChannel" href="#" target="_blank" rel="noopener noreferrer"
-              class="block rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3.5 text-center hover:bg-sky-500/10 transition">
-              📢 Telegram Channel
-            </a>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5">
             <a id="accountTelegramGroup" href="#" target="_blank" rel="noopener noreferrer"
-              class="block rounded-xl bg-[#FFD700] text-black font-bold py-3.5 text-center hover:bg-yellow-300 transition">
-              👥 Telegram Group / Support
+              class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FFD700] to-[#F4C900] text-gray-900 font-bold py-4 px-4 text-center shadow-[0_10px_25px_rgba(214,169,0,.18)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(214,169,0,.25)] transition">
+              <span class="block text-2xl mb-1">✈️</span>
+              <span class="block">Telegram Support</span>
+              <span class="block text-xs font-medium opacity-70 mt-1">Community & updates</span>
             </a>
             <a id="accountWhatsappChannel" href="https://whatsapp.com/channel/0029VbDzcP88F2pDS3w0vs3Y" target="_blank" rel="noopener noreferrer"
-              class="block rounded-xl border border-green-500/30 bg-green-500/5 text-green-300 font-semibold py-3.5 text-center hover:bg-green-500/10 transition">
-              💬 WhatsApp Channel
+              class="group relative overflow-hidden rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 to-white text-green-600 font-bold py-4 px-4 text-center shadow-[0_10px_25px_rgba(34,197,94,.10)] hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(34,197,94,.16)] transition">
+              <span class="block text-2xl mb-1">💬</span>
+              <span class="block">WhatsApp</span>
+              <span class="block text-xs font-medium text-green-500/70 mt-1">Official channel</span>
             </a>
           </div>
         </div>
@@ -1148,9 +1148,7 @@
   if (!TELEGRAM_CHANNEL_URL) $('telegramChannelLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram channel link will be added soon.'); });
   if (!TELEGRAM_GROUP_URL) $('telegramGroupLink').addEventListener('click', e => { e.preventDefault(); toast('Telegram group link will be added soon.'); });
 
-  $('accountTelegramChannel').href = TELEGRAM_CHANNEL_URL || '#';
   $('accountTelegramGroup').href = TELEGRAM_GROUP_URL || '#';
-  if (!TELEGRAM_CHANNEL_URL) $('accountTelegramChannel').addEventListener('click', e => { e.preventDefault(); toast('Telegram channel link will be added soon.'); });
   if (!TELEGRAM_GROUP_URL) $('accountTelegramGroup').addEventListener('click', e => { e.preventDefault(); toast('Telegram group/support link will be added soon.'); });
 
   $('copyAccountId').addEventListener('click', async () => {
