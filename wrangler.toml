@@ -18,3 +18,6 @@ ADMIN_EMAIL = "jkjastivanoofficial@gmail.com"
 REFERRAL_RATE_PERCENT = "5"
 DAILY_CHECKIN_BONUS = "400"
 ROOM_TERM_DAYS = "30"
+
+[triggers]
+crons = ["0 21 * * *"]
