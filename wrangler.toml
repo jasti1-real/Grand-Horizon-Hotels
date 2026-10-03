@@ -14,6 +14,7 @@ database_id = "f7e9cf2c-e6dc-44b1-9d16-7be4a200344a"
 migrations_dir = "migrations"
 
 [vars]
+ADMIN_EMAIL = "owner"
 REFERRAL_RATE_PERCENT = "5"
 DAILY_CHECKIN_BONUS = "400"
 ROOM_TERM_DAYS = "30"
