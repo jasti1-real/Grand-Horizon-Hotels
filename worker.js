@@ -259,28 +259,34 @@ function isValidAuthPhone(value) {
 }
 
 async function register(request, env) {
-  const { phone, password, referralCode } = await body(request);
-  const normalized = normalizeAuthPhone(phone);
-  if (!isValidAuthPhone(normalized) || !password || password.length < 8) return json({error:"Use a valid Ugandan telephone number and a password of at least 8 characters."},400);
-  const exists = await env.DB.prepare("SELECT id FROM users WHERE login=?").bind(normalized).first();
-  if (exists) return json({error:"An account with that telephone number already exists."},409);
-  let referrer = null;
-  if (referralCode) referrer = await env.DB.prepare("SELECT id FROM users WHERE referral_code=?").bind(String(referralCode).trim().toUpperCase()).first();
-  const rec = await makePasswordRecord(password);
-  const code = refCode();
-  const created = now();
-  const result = await env.DB.prepare("INSERT INTO users (login,password_hash,password_salt,referral_code,created_at) VALUES (?,?,?,?,?)")
-    .bind(normalized,rec.hash,rec.salt,code,created).run();
-  const userId = result.meta.last_row_id;
-  if (referrer) {
-    await env.DB.prepare("INSERT INTO referrals (referrer_id,referred_user_id,rate_percent,created_at) VALUES (?,?,?,?)")
-      .bind(referrer.id,userId,25,created).run();
+  try {
+    const { phone, password, referralCode } = await body(request);
+    const normalized = normalizeAuthPhone(phone);
+    if (!isValidAuthPhone(normalized) || !password || password.length < 8) return json({error:"Use a valid Ugandan telephone number and a password of at least 8 characters."},400);
+    const exists = await env.DB.prepare("SELECT id FROM users WHERE login=?").bind(normalized).first();
+    if (exists) return json({error:"An account with that telephone number already exists."},409);
+    let referrer = null;
+    if (referralCode) referrer = await env.DB.prepare("SELECT id FROM users WHERE referral_code=?").bind(String(referralCode).trim().toUpperCase()).first();
+    const rec = await makePasswordRecord(password);
+    const code = refCode();
+    const created = now();
+    await env.DB.prepare("INSERT INTO users (login,password_hash,password_salt,referral_code,created_at) VALUES (?,?,?,?,?)")
+      .bind(normalized,rec.hash,rec.salt,code,created).run();
+    const createdUser = await env.DB.prepare("SELECT id,login,referral_code FROM users WHERE login=? LIMIT 1").bind(normalized).first();
+    if (!createdUser) throw new Error("Registration could not create the customer record.");
+    const userId = createdUser.id;
+    if (referrer) {
+      await env.DB.prepare("INSERT INTO referrals (referrer_id,referred_user_id,rate_percent,created_at) VALUES (?,?,?,?)")
+        .bind(referrer.id,userId,25,created).run();
+    }
+    await grantWelcomeBonus(env,userId);
+    const token = await createSession(env,userId);
+    return json({ok:true,user:{id:userId,login:normalized,referralCode:createdUser.referral_code,balance:5000,totalEarnings:5000},welcomeBonus:5000},200,{"Set-Cookie":setCookie(COOKIE,token,SESSION_DAYS*86400)});
+  } catch (e) {
+    console.error("Registration error", e?.message || e);
+    return json({error:"Registration failed on the server. Please try again."},500);
   }
-  await grantWelcomeBonus(env,userId);
-  const token = await createSession(env,userId);
-  return json({ok:true,user:{id:userId,login:normalized,referralCode:code,balance:5000,totalEarnings:5000},welcomeBonus:5000},200,{"Set-Cookie":setCookie(COOKIE,token,SESSION_DAYS*86400)});
 }
-
 async function grantWelcomeBonus(env, userId) {
   const existing = await env.DB.prepare("SELECT id FROM transactions WHERE user_id=? AND type='earning' AND reference=? LIMIT 1")
     .bind(userId, "WELCOME-"+userId).first();
@@ -559,14 +565,14 @@ export default {
       if(url.pathname.startsWith("/api/")){
         if(url.pathname==="/api/health") return json({ok:true,service:"Grand Horizon Hotels",database:"D1"});
         const admin=await adminRoute(request,env,url); if(admin) return admin;
-        if(url.pathname==="/api/auth/register" && request.method==="POST") return register(request,env);
-        if(url.pathname==="/api/auth/login" && request.method==="POST") return login(request,env);
-        if(url.pathname==="/api/auth/logout" && request.method==="POST") return logout(request,env);
-        if(url.pathname==="/api/me" && request.method==="GET") return me(request,env);
-        if(url.pathname==="/api/checkin" && request.method==="POST") return checkin(request,env);
-        if(url.pathname==="/api/deposits" && request.method==="POST") return deposit(request,env);
-        if(url.pathname==="/api/withdrawals" && request.method==="POST") return withdrawal(request,env);
-        if(url.pathname==="/api/rent" && request.method==="POST") return rent(request,env);
+        if(url.pathname==="/api/auth/register" && request.method==="POST") return await register(request,env);
+        if(url.pathname==="/api/auth/login" && request.method==="POST") return await login(request,env);
+        if(url.pathname==="/api/auth/logout" && request.method==="POST") return await logout(request,env);
+        if(url.pathname==="/api/me" && request.method==="GET") return await me(request,env);
+        if(url.pathname==="/api/checkin" && request.method==="POST") return await checkin(request,env);
+        if(url.pathname==="/api/deposits" && request.method==="POST") return await deposit(request,env);
+        if(url.pathname==="/api/withdrawals" && request.method==="POST") return await withdrawal(request,env);
+        if(url.pathname==="/api/rent" && request.method==="POST") return await rent(request,env);
         return json({error:"API route not found."},404);
       }
       if(url.pathname==="/admin" || url.pathname==="/admin/") {
