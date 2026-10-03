@@ -87,7 +87,8 @@ async function ensureRulesTables(env) {
     env.DB.prepare("CREATE TABLE IF NOT EXISTS deposit_funds (user_id INTEGER PRIMARY KEY, available_amount INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL)"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS referral_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT, deposit_transaction_id INTEGER NOT NULL, beneficiary_id INTEGER NOT NULL, source_user_id INTEGER NOT NULL, level INTEGER NOT NULL, rate_percent INTEGER NOT NULL, bonus_amount INTEGER NOT NULL, created_at INTEGER NOT NULL, UNIQUE(deposit_transaction_id,beneficiary_id,level))"),
     env.DB.prepare("CREATE TABLE IF NOT EXISTS product_earnings (id INTEGER PRIMARY KEY AUTOINCREMENT, investment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, earning_date TEXT NOT NULL, amount INTEGER NOT NULL, created_at INTEGER NOT NULL, UNIQUE(investment_id,earning_date))"),
-    env.DB.prepare("CREATE TABLE IF NOT EXISTS withdrawal_details (transaction_id INTEGER PRIMARY KEY, tax_percent INTEGER NOT NULL, tax_amount INTEGER NOT NULL, net_amount INTEGER NOT NULL)")
+    env.DB.prepare("CREATE TABLE IF NOT EXISTS withdrawal_details (transaction_id INTEGER PRIMARY KEY, tax_percent INTEGER NOT NULL, tax_amount INTEGER NOT NULL, net_amount INTEGER NOT NULL)"),
+    env.DB.prepare("INSERT OR IGNORE INTO deposit_funds (user_id,available_amount,updated_at) SELECT u.id, MAX(0, COALESCE((SELECT SUM(t.amount) FROM transactions t WHERE t.user_id=u.id AND t.type='deposit' AND t.status='completed'),0)-COALESCE((SELECT SUM(t2.amount) FROM transactions t2 WHERE t2.user_id=u.id AND t2.type='room_purchase' AND t2.status='completed'),0)), ? FROM users u").bind(now())
   ]);
 }
 
