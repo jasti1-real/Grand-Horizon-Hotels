@@ -216,7 +216,7 @@
           </div>
           <button type="submit" class="auth-primary w-full py-3.5 transition">Login</button>
         </form>
-        <div class="text-center text-sm auth-small mt-5">Don't have an account? <a href="/register" class="auth-create">Create Account</a></div>
+        <div class="text-center text-sm auth-small mt-5">Don't have an account? <a href="/?register=1" class="auth-create">Create Account</a></div>
         <div class="social-links grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
           <a id="telegramChannelLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">📢 Telegram Channel</a>
           <a id="telegramGroupLink" href="#" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-sky-500/30 bg-sky-500/5 text-sky-300 font-semibold py-3 text-center hover:bg-sky-500/10 transition">👥 Telegram Group</a>
@@ -998,7 +998,7 @@
 
   function showAuthPage() {
     const path=location.pathname.replace(/\\/+$/, '') || '/';
-    const register=path === '/register';
+    const register=path === '/register' || new URLSearchParams(location.search).get('register') === '1';
     $('loginPage').classList.toggle('hidden', register);
     $('registerPage').classList.toggle('hidden', !register);
   }
