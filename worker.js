@@ -162,9 +162,10 @@ async function withdrawal(request, env) {
 
 async function rent(request, env) {
   const user=await currentUser(request,env); if(!user) return json({error:"Please sign in."},401);
-  const {packageId,price,dailyReturn}=await body(request);
-  const p=Math.floor(Number(price)), daily=Math.floor(Number(dailyReturn));
-  if(!Number.isFinite(p)||!Number.isFinite(daily)||p<=0||daily<0) return json({error:"Invalid room package."},400);
+  const {packageId}=await body(request);
+  const room=await env.DB.prepare("SELECT id,price_ugx,daily_figure_ugx FROM rooms WHERE id=? AND enabled=1").bind(Number(packageId)).first();
+  if(!room) return json({error:"Room package is not available."},400);
+  const p=Number(room.price_ugx), daily=Number(room.daily_figure_ugx);
   const fresh=await env.DB.prepare("SELECT balance FROM users WHERE id=?").bind(user.id).first();
   if(Number(fresh.balance)<p) return json({error:"Insufficient balance. Please deposit funds."},400);
   const started=now();
@@ -200,13 +201,25 @@ async function adminLogout(request,env){
 
 async function adminSummary(request,env){
   if(!await requireAdmin(request,env)) return json({error:"Administrator login required."},401);
-  const [stats,deposits,referrals,users] = await Promise.all([
+  const [stats,deposits,withdrawals,referrals,users] = await Promise.all([
     env.DB.prepare("SELECT (SELECT COUNT(*) FROM users) users,(SELECT COALESCE(SUM(balance),0) FROM users) totalBalances,(SELECT COUNT(*) FROM transactions WHERE type='deposit' AND status='pending') pendingDeposits,(SELECT COUNT(*) FROM investments WHERE status='active') investments,(SELECT COALESCE(SUM(bonus_amount),0) FROM referral_credits) referralBonuses").first(),
     env.DB.prepare("SELECT t.id,t.amount,t.method,t.reference,t.created_at,u.login FROM transactions t JOIN users u ON u.id=t.user_id WHERE t.type='deposit' AND t.status='pending' ORDER BY t.id DESC LIMIT 50").all(),
+    env.DB.prepare("SELECT t.id,t.amount,t.method,t.reference,t.created_at,u.login FROM transactions t JOIN users u ON u.id=t.user_id WHERE t.type='withdrawal' AND t.status='pending' ORDER BY t.id DESC LIMIT 50").all(),
     env.DB.prepare("SELECT r.id,r.status,r.bonus_amount,u1.login referrer_login,u2.login referred_login FROM referrals r JOIN users u1 ON u1.id=r.referrer_id JOIN users u2 ON u2.id=r.referred_user_id ORDER BY r.id DESC LIMIT 50").all(),
     env.DB.prepare("SELECT id,login,balance,total_earnings,created_at FROM users ORDER BY id DESC LIMIT 100").all()
   ]);
-  return json({ ...stats, deposits:deposits.results||[], referrals:referrals.results||[], usersList:users.results||[] });
+  return json({ ...stats, deposits:deposits.results||[], withdrawals:withdrawals.results||[], referrals:referrals.results||[], usersList:users.results||[] });
+}
+
+async function approveWithdrawal(request,env,id){
+  if(!await requireAdmin(request,env)) return json({error:"Administrator login required."},401);
+  const tx=await env.DB.prepare("SELECT * FROM transactions WHERE id=? AND type='withdrawal'").bind(id).first();
+  if(!tx) return json({error:"Withdrawal not found."},404);
+  if(tx.status!=="pending") return json({error:"This withdrawal has already been processed."},409);
+  const result=await env.DB.prepare("UPDATE users SET balance=balance-? WHERE id=? AND balance>=?").bind(tx.amount,tx.user_id,tx.amount).run();
+  if(!result.meta.changes) return json({error:"Customer no longer has enough available balance."},409);
+  await env.DB.prepare("UPDATE transactions SET status='completed' WHERE id=?").bind(id).run();
+  return json({ok:true,paid:tx.amount});
 }
 
 async function approveDeposit(request,env,id){
