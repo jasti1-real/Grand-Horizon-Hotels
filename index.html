@@ -256,7 +256,7 @@
       <div class="auth-card glass rounded-3xl p-6 sm:p-8 shadow-2xl">
         <form id="loginForm" class="space-y-5">
           <div><label class="auth-label block text-sm mb-2">Telephone Number</label>
-            <input id="loginEmailInput" type="tel" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
+            <input id="loginPhoneInput" type="tel" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
           <div><label class="auth-label block text-sm mb-2">Password</label>
             <input id="loginPasswordInput" type="password" required minlength="8" autocomplete="current-password" class="w-full px-4 py-3.5" placeholder="••••••••"></div>
           <div class="flex items-center justify-between text-sm mt-1">
@@ -289,7 +289,7 @@
       <div class="auth-card glass rounded-3xl p-6 sm:p-8 shadow-2xl">
         <form id="registerForm" class="space-y-5">
           <div><label class="auth-label block text-sm mb-2">Telephone Number</label>
-            <input id="registerEmailInput" type="tel" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
+            <input id="registerPhoneInput" type="tel" required autocomplete="username" class="w-full px-4 py-3.5" placeholder="07XXXXXXXX"></div>
           <div><label class="auth-label block text-sm mb-2">Password</label>
             <input id="registerPasswordInput" type="password" required minlength="8" autocomplete="new-password" class="w-full px-4 py-3.5" placeholder="At least 8 characters"></div>
           <div><label class="auth-label block text-sm mb-2">Confirm Password</label>
@@ -1085,7 +1085,7 @@
 
   $('loginForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const phone = normalizedPhone($('loginEmailInput').value);
+    const phone = normalizedPhone($('loginPhoneInput').value);
     const password = $('loginPasswordInput').value;
     if (!/^\\+2567\\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
     if (password.length < 8) { toast('Password must be at least 8 characters.'); return; }
@@ -1098,7 +1098,7 @@
 
   $('registerForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const phone=normalizedPhone($('registerEmailInput').value);
+    const phone=normalizedPhone($('registerPhoneInput').value);
     const password=$('registerPasswordInput').value;
     const confirm=$('registerConfirmPasswordInput').value;
     if (!/^\\+2567\\d{8}$/.test(phone)) { toast('Enter a valid Ugandan telephone number, e.g. 07XXXXXXXX.'); return; }
@@ -1111,6 +1111,12 @@
       await syncServer(); enterApp(); renderAll(); openWelcomeModal();
       toast('Account created. UGX 5,000 welcome bonus added.');
     } catch(e) { toast(e.message); }
+  });
+
+  // Explicitly route the Create Account button through the form submit handler. This prevents mobile/browser click handling from being ignored.
+  $('registerForm').querySelector('button[type="submit"]')?.addEventListener('click', e => {
+    e.preventDefault();
+    $('registerForm').requestSubmit();
   });
 
   const referralFromUrl = new URLSearchParams(location.search).get('ref');
