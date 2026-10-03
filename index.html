@@ -1058,6 +1058,7 @@
     $('bottomNav').classList.remove('hidden');
     try { await syncServer(); } catch(e) {}
     renderAll();
+    openWelcomeModal();
   }
 
   function leaveApp() {
@@ -1102,7 +1103,7 @@
       const referralCode=$('registerReferralCodeInput').value.trim().toUpperCase() || new URLSearchParams(location.search).get('ref') || '';
       await api('/api/auth/register',{method:'POST',body:JSON.stringify({phone,password,referralCode})});
       state=defaultState(phone); state.email=phone; state.loggedIn=true;
-      await syncServer(); enterApp(); renderAll(); openWelcomeModal();
+      await syncServer(); enterApp(); renderAll();
       toast('Account created. UGX 5,000 welcome bonus added.');
     } catch(e) { toast(e.message); }
   });
