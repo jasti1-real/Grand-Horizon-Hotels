@@ -116,16 +116,32 @@ async function register(request, env) {
     await env.DB.prepare("INSERT INTO referrals (referrer_id,referred_user_id,rate_percent,created_at) VALUES (?,?,?,?)")
       .bind(referrer.id,userId,REFERRAL_RATE,created).run();
   }
+  await grantWelcomeBonus(env,userId);
   const token = await createSession(env,userId);
-  return json({ok:true,user:{id:userId,login:normalized,referralCode:code,balance:0,totalEarnings:0}},200,{"Set-Cookie":setCookie(COOKIE,token,SESSION_DAYS*86400)});
+  return json({ok:true,user:{id:userId,login:normalized,referralCode:code,balance:5000,totalEarnings:5000},welcomeBonus:5000},200,{"Set-Cookie":setCookie(COOKIE,token,SESSION_DAYS*86400)});
+}
+
+async function grantWelcomeBonus(env, userId) {
+  const existing = await env.DB.prepare("SELECT id FROM transactions WHERE user_id=? AND type='earning' AND reference=? LIMIT 1")
+    .bind(userId, "WELCOME-"+userId).first();
+  if (existing) return false;
+  const bonus = 5000;
+  const ts = now();
+  await env.DB.batch([
+    env.DB.prepare("UPDATE users SET balance=balance+?,total_earnings=total_earnings+? WHERE id=?").bind(bonus,bonus,userId),
+    env.DB.prepare("INSERT INTO transactions (user_id,type,amount,status,reference,created_at) VALUES (?, 'earning', ?, 'completed', ?, ?)").bind(userId,bonus,"WELCOME-"+userId,ts)
+  ]);
+  return true;
 }
 
 async function login(request, env) {
   const { login, password } = await body(request);
   const row = await env.DB.prepare("SELECT * FROM users WHERE login=?").bind(String(login||"").trim().toLowerCase()).first();
   if (!row || !(await verifyPassword(String(password||""),row.password_hash,row.password_salt))) return json({error:"Invalid login details."},401);
+  await grantWelcomeBonus(env,row.id);
+  const fresh = await env.DB.prepare("SELECT id,login,referral_code,balance,total_earnings FROM users WHERE id=?").bind(row.id).first();
   const token = await createSession(env,row.id);
-  return json({ok:true,user:{id:row.id,login:row.login,referralCode:row.referral_code,balance:row.balance,totalEarnings:row.total_earnings}},200,{"Set-Cookie":setCookie(COOKIE,token,SESSION_DAYS*86400)});
+  return json({ok:true,user:{id:fresh.id,login:fresh.login,referralCode:fresh.referral_code,balance:fresh.balance,totalEarnings:fresh.total_earnings},welcomeBonus:5000},200,{"Set-Cookie":setCookie(COOKIE,token,SESSION_DAYS*86400)});
 }
 
 async function logout(request, env) {
